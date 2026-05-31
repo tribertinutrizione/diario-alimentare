@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Diario Alimentare – Dr. Triberti</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+  :root {
+    --bg: #F5F3EE;
+    --white: #FFFFFF;
+    --accent: #C8402A;
+    --accent-light: #F9EDEA;
+    --dark: #1A1A1A;
+    --mid: #6B6B6B;
+    --border: #E0DDD6;
+    --green: #2E6B4F;
+    --green-light: #EAF4EE;
+    --blue: #2A4A8A;
+    --blue-light: #EBF0FA;
+    --orange: #D4711A;
+    --orange-light: #FDF2E3;
+    --radius: 14px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--dark);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--dark);
+    padding: 18px 20px 14px;
+    border-bottom: 3px solid var(--accent);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-title {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .header-title span { color: var(--accent); }
+  .header-sub {
+    color: #888;
+    font-size: 11px;
+    margin-top: 2px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* CONTAINER */
+  .container { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+  /* CARD */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  /* INFO PAZIENTE */
+  .info-section { padding: 16px; }
+  .info-section h2 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--mid);
+    margin-bottom: 12px;
+  }
+  .field-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  input[type="text"], input[type="date"], input[type="email"], textarea {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--dark);
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  input:focus, textarea:focus {
+    border-color: var(--accent);
+    background: #fff;
+  }
+
+  /* PASTO HEADER */
+  .pasto-header {
+    background: var(--dark);
+    color: #fff;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pasto-name {
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .pasto-kcal {
+    font-size: 12px;
+    color: #aaa;
+    font-weight: 500;
+  }
+
+  /* PASTO BODY */
+  .pasto-body { padding: 12px; }
+
+  /* RIGA ALIMENTO */
+  .riga-alimento {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+  }
+  .riga-top {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .riga-bottom {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  /* AUTOCOMPLETE */
+  .autocomplete-wrap { position: relative; flex: 1; }
+  .autocomplete-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fff;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  .autocomplete-input:focus { border-color: var(--accent); }
+  .autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 500;
+    margin-top: 3px;
+  }
+  .autocomplete-item {
+    padding: 11px 14px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:active, .autocomplete-item.selected { background: var(--accent-light); }
+
+  /* INPUT GRAMMI */
+  .grammi-input {
+    width: 72px;
+    padding: 9px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    text-align: center;
+    -webkit-appearance: none;
+    background: #fff;
+    outline: none;
+  }
+  .grammi-input:focus { border-color: var(--accent); }
+
+  /* ELIMINA */
+  .btn-remove {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: #ccc;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+  }
+  .btn-remove:active { color: var(--accent); }
+
+  /* VALORI NUTRIZIONALI RIGA */
+  .nutri-pill {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--mid);
+    white-space: nowrap;
+  }
+  .nutri-pill.kcal { background: var(--accent-light); color: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+  /* AGGIUNGI ALIMENTO */
+  .btn-add {
+    width: 100%;
+    padding: 11px;
+    background: transparent;
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--mid);
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 4px;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.15s;
+  }
+  .btn-add:active { background: var(--bg); border-color: var(--accent); color: var(--accent); }
+
+  /* TOTALE PASTO */
+  .totale-pasto {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* RIEPILOGO FINALE */
+  .riepilogo {
+    background: var(--dark);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .riepilogo-title {
+    color: #fff;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+  .macro-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .macro-box {
+    background: rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+  .macro-val {
+    font-size: 18px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .macro-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-top: 3px;
+    opacity: 0.6;
+  }
+  .macro-unit { font-size: 9px; opacity: 0.5; }
+
+  /* BARRA MACRO */
+  .macro-bar-wrap { border-radius: 6px; overflow: hidden; height: 10px; display: flex; margin-bottom: 6px; }
+  .macro-bar-p { background: var(--accent); }
+  .macro-bar-l { background: var(--orange); }
+  .macro-bar-c { background: var(--blue); }
+  .macro-bar-legend {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+  }
+
+  /* NOTE */
+  .note-section { padding: 16px; }
+  .note-section label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--mid); }
+
+  /* BOTTONE INVIO */
+  .btn-invia {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 16px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    margin-bottom: 12px;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .btn-invia:active { opacity: 0.85; }
+  .btn-invia:disabled { background: var(--border); color: var(--mid); cursor: default; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--dark);
+    color: #fff;
+    padding: 14px 24px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 9999;
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { background: var(--green); }
+  .toast.error { background: var(--accent); }
+
+  /* LOADING OVERLAY */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9000;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .overlay.show { display: flex; }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 4px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  .overlay-text { color: #fff; font-size: 14px; font-weight: 600; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* RESPONSIVE FINE TUNE */
+  @media (max-width: 380px) {
+    .macro-grid { grid-template-columns: repeat(5, 1fr); gap: 4px; }
+    .macro-val { font-size: 15px; }
+    .container { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">TRIBERTI <span>NUTRIZIONISTA</span></div>
+  <div class="header-sub">Diario alimentare · Compilazione paziente</div>
+</div>
+
+<div class="container">
+
+  <!-- INFO PAZIENTE -->
+  <div class="card">
+    <div class="info-section">
+      <h2>I tuoi dati</h2>
+      <div class="field-row">
+        <input type="text" id="nome" placeholder="Nome e Cognome" />
+      </div>
+      <div class="field-row">
+        <input type="date" id="data" />
+        <input type="email" id="email" placeholder="Tua email (opz.)" />
+      </div>
+    </div>
+  </div>
+
+  <!-- PASTI -->
+  <div id="pasti-container"></div>
+
+  <!-- RIEPILOGO -->
+  <div class="riepilogo" id="riepilogo" style="display:none">
+    <div class="riepilogo-title">Totale giornata</div>
+    <div class="macro-grid">
+      <div class="macro-box">
+        <div class="macro-val" id="tot-kcal" style="color:#E57B65">0</div>
+        <div class="macro-unit">kcal</div>
+        <div class="macro-label">Energia</div>
+      </div>
+      <div class="macro-box">
+        <div class="macro-val" id="tot-p" style="color:#E57B65">0</div>
+        <div class="macro-unit">g</div>
+        <div class="macro-label">Proteine</div>
+      </div>
+      <div class="macro-box">
+        <div class="macro-val" id="tot-l" style="color:#E8A060">0</div>
+        <div class="macro-unit">g</div>
+        <div class="macro-label">Grassi</div>
+      </div>
+      <div class="macro-box">
+        <div class="macro-val" id="tot-c" style="color:#8BA4D4">0</div>
+        <div class="macro-unit">g</div>
+        <div class="macro-label">Carbo</div>
+      </div>
+      <div class="macro-box">
+        <div class="macro-val" id="tot-f" style="color:#7CB89A">0</div>
+        <div class="macro-unit">g</div>
+        <div class="macro-label">Fibra</div>
+      </div>
+    </div>
+    <div class="macro-bar-wrap" id="macro-bar"></div>
+    <div class="macro-bar-legend">
+      <span>● Proteine</span>
+      <span>● Grassi</span>
+      <span>● Carboidrati</span>
+    </div>
+  </div>
+
+  <!-- NOTE -->
+  <div class="card">
+    <div class="note-section">
+      <label>Note aggiuntive (opzionale)</label>
+      <textarea id="note" rows="3" placeholder="Aggiungi qui qualsiasi informazione utile per il tuo nutrizionista..."></textarea>
+    </div>
+  </div>
+
+  <!-- INVIO -->
+  <button class="btn-invia" id="btn-invia" onclick="inviaDiario()">
+    📤 Invia il diario al nutrizionista
+  </button>
+
+  <div style="text-align:center; font-size:11px; color:var(--mid); padding: 0 16px 8px;">
+    I dati vengono inviati direttamente a<br>
+    <strong>Emanuele Triberti · Biologo Nutrizionista</strong><br>
+    info@tribertinutrizione.it · 379 185 1651
+  </div>
+
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="spinner"></div>
+  <div class="overlay-text">Invio in corso...</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATABASE ALIMENTI (estratto da Databse_alimenti.xlsx) ─────────────────
+// Valori per 100g: kcal, proteine(g), lipidi(g), carboidrati(g)
+const DB = {"Patate":{"kcal":77.0,"p":2.1,"l":0.1,"c":18.0},"Patate dolci":{"kcal":87.0,"p":1.2,"l":0.3,"c":21.3},"Patate novelle":{"kcal":67.0,"p":2.0,"l":0,"c":15.8},"Fecola di patate":{"kcal":349.0,"p":1.4,"l":0,"c":91.5},"Patate in polvere (istantanee)":{"kcal":318.0,"p":9.1,"l":0.8,"c":73.2},"Patatine in busta":{"kcal":531.0,"p":7.0,"l":34.6,"c":51.2},"Tapioca":{"kcal":363.0,"p":0.6,"l":0.2,"c":95.8},"Asparagi di bosco":{"kcal":35.0,"p":4.6,"l":0.2,"c":4.0},"Asparagi di campo":{"kcal":29.0,"p":3.6,"l":0.2,"c":3.3},"Asparagi di serra":{"kcal":24.0,"p":3.0,"l":0.1,"c":3.0},"Asparagi in scatola":{"kcal":18.0,"p":2.1,"l":0.7,"c":0.9},"Germogli di erba medica":{"kcal":24.0,"p":4.0,"l":0.7,"c":0.4},"Germogli di soia":{"kcal":49.0,"p":6.2,"l":1.4,"c":3.0},"Barbabietola rossa":{"kcal":19.0,"p":1.1,"l":0,"c":4.0},"Carote":{"kcal":33.0,"p":1.1,"l":0,"c":7.6},"Daikon":{"kcal":15.0,"p":0.8,"l":0.1,"c":2.9},"Rape":{"kcal":18.0,"p":1.0,"l":0,"c":3.8},"Ravanelli":{"kcal":11.0,"p":0.8,"l":0.1,"c":1.8},"Scorzonera":{"kcal":46.0,"p":1.3,"l":0.3,"c":10.2},"Sedano rapa":{"kcal":23.0,"p":1.9,"l":0.1,"c":3.8},"Broccoletti di rapa":{"kcal":22.0,"p":2.9,"l":0.3,"c":2.0},"Broccoli":{"kcal":27.0,"p":3.0,"l":0.4,"c":3.1},"Cavolfiore":{"kcal":25.0,"p":3.2,"l":0.2,"c":2.7},"Cavolini di Bruxelles":{"kcal":37.0,"p":4.2,"l":0.5,"c":4.3},"Broccolo ramoso":{"kcal":24.0,"p":3.4,"l":0.3,"c":2.0},"Cavolo cappuccio rosso":{"kcal":20.0,"p":1.9,"l":0.2,"c":2.7},"Cavolo cappuccio verde":{"kcal":19.0,"p":2.1,"l":0.1,"c":2.5},"Crauti":{"kcal":24.0,"p":1.5,"l":0.3,"c":4.0},"Verza cruda":{"kcal":0.0,"p":2.0,"l":0.1,"c":0.0},"Aglio fresco":{"kcal":40.0,"p":0.9,"l":0.6,"c":8.4},"Aglio in polvere":{"kcal":246.0,"p":18.7,"l":1.2,"c":42.7},"Cipolle":{"kcal":26.0,"p":1.0,"l":0.1,"c":5.7},"Cipolle secche":{"kcal":313.0,"p":10.2,"l":1.7,"c":68.6},"Cipolline":{"kcal":38.0,"p":1.3,"l":0.1,"c":8.5},"Porri":{"kcal":29.0,"p":2.1,"l":0.1,"c":5.2},"Scalogno":{"kcal":20.0,"p":1.5,"l":0.2,"c":3.3},"Succo di barbabietola":{"kcal":14.0,"p":0.8,"l":0,"c":2.9},"Succo di carote":{"kcal":24.0,"p":0.5,"l":0.1,"c":5.7},"Succo di pomodoro":{"kcal":14.0,"p":0.8,"l":0,"c":3.0},"Succo di spinaci":{"kcal":10.0,"p":1.4,"l":0.3,"c":0.5},"Funghi chiodini":{"kcal":15.0,"p":2.1,"l":0.7,"c":0.1},"Funghi gallinacci (finferli)":{"kcal":12.0,"p":1.6,"l":0.5,"c":0.2},"Funghi gallinacci secchi":{"kcal":93.0,"p":16.5,"l":2.2,"c":1.8},"Funghi in scatola":{"kcal":27.0,"p":3.0,"l":0.4,"c":3.0},"Funghi ovuli":{"kcal":18.0,"p":2.0,"l":0.3,"c":1.9},"Funghi porcinelli":{"kcal":24.0,"p":3.1,"l":0.6,"c":1.6},"Funghi porcini":{"kcal":27.0,"p":3.9,"l":0.7,"c":1.4},"Funghi champignon":{"kcal":20.0,"p":2.3,"l":0.4,"c":1.9},"Funghi shiitake secchi":{"kcal":314.0,"p":16.3,"l":1.0,"c":63.9},"Funghi spugnoli":{"kcal":17.0,"p":1.7,"l":0.3,"c":1.9},"Funghi secchi (misti)":{"kcal":262.0,"p":40.6,"l":4.6,"c":15.6},"Tartufo nero":{"kcal":31.0,"p":6.0,"l":0.5,"c":0.7},"Funghi pleurotus":{"kcal":28.0,"p":2.2,"l":0.3,"c":4.5},"Agretti":{"kcal":17.0,"p":1.8,"l":0.2,"c":2.2},"Bietola":{"kcal":17.0,"p":1.3,"l":0.1,"c":2.8},"Bietola in scatola":{"kcal":25.0,"p":0.9,"l":0.1,"c":5.5},"Cicoria":{"kcal":10.0,"p":1.4,"l":0.2,"c":0.7},"Cicoria catalogna":{"kcal":24.0,"p":1.8,"l":0.5,"c":3.2},"Cicoria da taglio":{"kcal":12.0,"p":1.2,"l":0.1,"c":1.7},"Cicoria witloof":{"kcal":18.0,"p":0.7,"l":0.3,"c":3.2},"Crescione":{"kcal":22.0,"p":3.0,"l":1.0,"c":0.4},"Foglie di rapa":{"kcal":22.0,"p":2.6,"l":0.1,"c":2.8},"Indivia":{"kcal":16.0,"p":0.9,"l":0.3,"c":2.7},"Insalata mista":{"kcal":0,"p":0,"l":0,"c":0},"Lattuga":{"kcal":19.0,"p":1.8,"l":0.4,"c":2.2},"Lattuga cappuccio":{"kcal":19.0,"p":1.5,"l":0.2,"c":3.0},"Lattuga da taglio":{"kcal":14.0,"p":1.1,"l":0.1,"c":2.2},"Ortica":{"kcal":35.0,"p":5.9,"l":0.7,"c":1.3},"Radicchio rosso":{"kcal":12.0,"p":1.4,"l":0.1,"c":1.6},"Radicchio verde":{"kcal":14.0,"p":1.9,"l":0.5,"c":0.5},"Rucola":{"kcal":25.0,"p":2.6,"l":0.7,"c":2.1},"Scarola":{"kcal":15.0,"p":1.6,"l":0.2,"c":1.7},"Spinaci":{"kcal":31.0,"p":3.4,"l":0.7,"c":3.0},"Spinaci in scatola":{"kcal":19.0,"p":2.8,"l":0.5,"c":0.8},"Valerianella (songino)":{"kcal":25.0,"p":2.0,"l":0.4,"c":3.6},"Indivia belga":{"kcal":18.0,"p":0.7,"l":0.3,"c":3.2},"Carciofi":{"kcal":22.0,"p":2.7,"l":0.2,"c":2.5},"Carciofi surgelati":{"kcal":29.0,"p":2.6,"l":0.4,"c":3.9},"Cardi":{"kcal":10.0,"p":0.6,"l":0.1,"c":1.7},"Cetrioli":{"kcal":14.0,"p":0.7,"l":0.5,"c":1.8},"Finocchi":{"kcal":9.0,"p":1.2,"l":0,"c":1.0},"Fiori di zucca":{"kcal":12.0,"p":1.7,"l":0.4,"c":0.5},"Melanzane":{"kcal":15.0,"p":1.1,"l":0.1,"c":2.6},"Peperoncini piccanti":{"kcal":26.0,"p":1.8,"l":0.5,"c":3.8},"Peperoni dolci":{"kcal":22.0,"p":0.9,"l":0.3,"c":4.2},"Peperoni gialli":{"kcal":25.0,"p":0.9,"l":0.3,"c":5.0},"Pomodori da insalata":{"kcal":17.0,"p":1.2,"l":0.2,"c":2.8},"Pomodori":{"kcal":19.0,"p":1.0,"l":0.2,"c":3.5},"Pomodori secchi sott'olio":{"kcal":213.0,"p":5.1,"l":14.1,"c":17.5},"Pomodori pelati in scatola":{"kcal":21.0,"p":1.2,"l":0.5,"c":3.0},"Concentrato di pomodoro (leggero)":{"kcal":50.0,"p":0.9,"l":0.4,"c":11.4},"Concentrato di pomodoro (medio)":{"kcal":84.0,"p":4.4,"l":0.6,"c":16.4},"Conserva di pomodoro":{"kcal":96.0,"p":3.9,"l":0.4,"c":20.4},"Sedano":{"kcal":20.0,"p":2.3,"l":0.2,"c":2.4},"Zucca":{"kcal":18.0,"p":1.1,"l":0.1,"c":3.5},"Zucchine":{"kcal":11.0,"p":1.3,"l":0.1,"c":1.4},"Peperoni":{"kcal":22.0,"p":0.9,"l":0.3,"c":4.2},"Peperoni verdi":{"kcal":27.0,"p":0.7,"l":0.2,"c":6.0},"Passata di pomodoro":{"kcal":18.0,"p":1.3,"l":0.2,"c":3.0},"Zucchine chiare":{"kcal":11.0,"p":1.3,"l":0.1,"c":1.4},"Zucchine scure":{"kcal":11.0,"p":1.3,"l":0.1,"c":1.4},"Tarassaco (dente di leone)":{"kcal":36.0,"p":3.1,"l":1.1,"c":3.7},"Carciofini sott'aceto":{"kcal":24.0,"p":2.9,"l":0.2,"c":2.7},"Carciofini sott'olio":{"kcal":68.0,"p":1.8,"l":5.7,"c":2.6},"Cetrioli in salamoia":{"kcal":14.0,"p":0.9,"l":0.1,"c":2.6},"Cetriolini sott'aceto":{"kcal":14.0,"p":0.9,"l":0.1,"c":2.6},"Cipolline sott'aceto":{"kcal":24.0,"p":0.9,"l":0.2,"c":4.9},"Funghi sott'olio":{"kcal":48.0,"p":3.3,"l":3.9,"c":0},"Giardiniera sott'aceto":{"kcal":7.0,"p":0.4,"l":0.3,"c":0.6},"Giardiniera sott'olio":{"kcal":58.0,"p":2.6,"l":4.8,"c":1.3},"Melanzane sott'olio":{"kcal":50.0,"p":1.1,"l":4.0,"c":2.5},"Olive (miste)":{"kcal":268.0,"p":1.5,"l":27.0,"c":5.0},"Olive nere":{"kcal":235.0,"p":1.6,"l":25.1,"c":0.8},"Olive verdi":{"kcal":142.0,"p":0.8,"l":15.0,"c":1.0},"Peperoni sott'aceto":{"kcal":15.0,"p":0.8,"l":0.6,"c":1.7},"Pomodori secchi":{"kcal":247.0,"p":14.1,"l":3.0,"c":43.5},"Olive verdi in salamoia":{"kcal":108.0,"p":1.2,"l":11.0,"c":1.0},"Agar agar":{"kcal":17.0,"p":1.6,"l":1.2,"c":0},"Irish moss":{"kcal":8.0,"p":1.5,"l":0.2,"c":0},"Alga kombu":{"kcal":43.0,"p":7.1,"l":1.6,"c":0},"Alga nori":{"kcal":136.0,"p":30.7,"l":1.5,"c":0},"Alga wakame":{"kcal":71.0,"p":12.4,"l":2.4,"c":0},"Verdure miste surgelate":{"kcal":53.0,"p":3.3,"l":0.5,"c":9.5},"Verdure miste surgelate (piselli, mais, carote)":{"kcal":67.0,"p":3.3,"l":0.3,"c":13.7},"Ceci in scatola":{"kcal":57.0,"p":4.3,"l":1.4,"c":7.2},"Ceci secchi":{"kcal":335.0,"p":21.8,"l":4.9,"c":54.3},"Fagioli (misti)":{"kcal":104.0,"p":6.4,"l":0.6,"c":19.4},"Fagioli azuki secchi":{"kcal":272.0,"p":19.9,"l":0.5,"c":50.1},"Fagioli in scatola":{"kcal":45.0,"p":4.1,"l":0.5,"c":6.3},"Fagioli mung secchi":{"kcal":279.0,"p":23.9,"l":1.1,"c":46.3},"Fagioli secchi":{"kcal":311.0,"p":23.6,"l":2.5,"c":51.7},"Fagiolini":{"kcal":18.0,"p":2.1,"l":0.1,"c":2.4},"Fagiolini in scatola":{"kcal":22.0,"p":1.5,"l":0.1,"c":4.1},"Fave fresche":{"kcal":39.0,"p":5.4,"l":0.2,"c":4.2},"Fave secche sgusciate":{"kcal":343.0,"p":27.2,"l":3.0,"c":55.3},"Lenticchie in scatola":{"kcal":64.0,"p":5.0,"l":0.4,"c":10.7},"Lenticchie secche":{"kcal":325.0,"p":25.0,"l":2.5,"c":54.0},"Lupini":{"kcal":114.0,"p":16.4,"l":2.4,"c":7.2},"Piselli":{"kcal":76.0,"p":7.0,"l":0.2,"c":12.4},"Piselli in scatola":{"kcal":56.0,"p":5.8,"l":0.8,"c":6.8},"Piselli sgocciolati":{"kcal":56.0,"p":5.8,"l":0.8,"c":6.8},"Piselli surgelati":{"kcal":55.0,"p":5.7,"l":0.4,"c":7.5},"Piselli secchi":{"kcal":306.0,"p":21.7,"l":2.0,"c":53.6},"Semi di soia":{"kcal":398.0,"p":36.9,"l":18.1,"c":23.3},"Fagioli borlotti freschi":{"kcal":133.0,"p":10.2,"l":0.8,"c":22.7},"Fagioli borlotti in scatola":{"kcal":91.0,"p":6.7,"l":0.5,"c":15.9},"Fagioli borlotti secchi":{"kcal":291.0,"p":20.2,"l":2.0,"c":47.5},"Fagioli cannellini secchi":{"kcal":279.0,"p":23.4,"l":1.6,"c":45.5},"Fagioli cannellini in scatola":{"kcal":76.0,"p":6.0,"l":0.6,"c":12.5},"Fagioli Dall’Occhio, Secchi":{"kcal":293.0,"p":22.4,"l":1.4,"c":50.9},"Fave secche":{"kcal":224.0,"p":21.3,"l":3.0,"c":29.7},"Farina di ceci":{"kcal":335.0,"p":21.8,"l":4.9,"c":54.3},"Farina di soia magra":{"kcal":352.0,"p":45.3,"l":7.2,"c":28.2},"Farina di soia intera":{"kcal":447.0,"p":36.8,"l":23.5,"c":23.5},"Latte di soia":{"kcal":32.0,"p":2.9,"l":1.9,"c":0.8},"Miso":{"kcal":197.0,"p":13.3,"l":6.2,"c":23.5},"Natto":{"kcal":204.0,"p":17.7,"l":11.0,"c":9.0},"Salsa di soia (shoyu)":{"kcal":51.0,"p":5.2,"l":0.1,"c":7.7},"Bistecca di soia":{"kcal":277.0,"p":47.0,"l":1.2,"c":20.9},"Salsa di soia tamari":{"kcal":61.0,"p":10.5,"l":0.1,"c":4.8},"Tempeh":{"kcal":164.0,"p":20.7,"l":6.4,"c":6.4},"Tofu":{"kcal":78.0,"p":8.1,"l":4.8,"c":0.7},"Yogurt di soia":{"kcal":72.0,"p":5.0,"l":4.2,"c":3.9},"Isolato proteico di soia":{"kcal":369.0,"p":86.5,"l":0.7,"c":4.5},"Albicocche":{"kcal":28.0,"p":0.4,"l":0.1,"c":6.8},"Amarene":{"kcal":41.0,"p":0.8,"l":0,"c":10.2},"Ananas":{"kcal":40.0,"p":0.5,"l":0,"c":10.0},"Cherimola":{"kcal":69.0,"p":1.8,"l":0.2,"c":16.1},"Arance":{"kcal":34.0,"p":0.7,"l":0.2,"c":7.8},"Avocado":{"kcal":231.0,"p":4.4,"l":23.0,"c":1.8},"Babaco":{"kcal":21.0,"p":0.7,"l":0.2,"c":4.5},"Banane":{"kcal":65.0,"p":1.2,"l":0.3,"c":15.4},"Ciliegie":{"kcal":38.0,"p":0.8,"l":0.1,"c":9.0},"Anguria (cocomero)":{"kcal":15.0,"p":0.4,"l":0,"c":3.7},"Datteri freschi":{"kcal":124.0,"p":1.5,"l":0.1,"c":31.3},"Feijoa":{"kcal":46.0,"p":0.7,"l":0.8,"c":9.6},"Fichi":{"kcal":47.0,"p":0.9,"l":0.2,"c":11.2},"Fichi d'India":{"kcal":53.0,"p":0.8,"l":0.1,"c":13.0},"Fragole":{"kcal":27.0,"p":0.9,"l":0.4,"c":5.3},"Frutta esotica (generica)":{"kcal":87.0,"p":1.7,"l":4.0,"c":11.7},"Frutta fresca estiva (media)":{"kcal":31.0,"p":0.7,"l":0.1,"c":7.2},"Frutta fresca invernale (media)":{"kcal":50.0,"p":0.5,"l":0.2,"c":12.3},"Frutta fresca (generica)":{"kcal":45.0,"p":0.6,"l":0.2,"c":11.0},"Guava":{"kcal":20.0,"p":0.7,"l":0.5,"c":3.5},"Cachi/kaki":{"kcal":65.0,"p":0.6,"l":0.3,"c":16.0},"Kiwi":{"kcal":44.0,"p":1.2,"l":0.6,"c":9.0},"Lamponi":{"kcal":34.0,"p":1.0,"l":0.6,"c":6.5},"Lime":{"kcal":38.0,"p":0.7,"l":0.3,"c":8.8},"Limone":{"kcal":11.0,"p":0.6,"l":0,"c":2.3},"Litchi":{"kcal":70.0,"p":1.1,"l":0.1,"c":17.2},"Macedonia fresca":{"kcal":79.0,"p":0.5,"l":0.2,"c":20.1},"Clementine":{"kcal":53.0,"p":0.8,"l":0.2,"c":12.8},"Mandarini":{"kcal":72.0,"p":0.9,"l":0.3,"c":17.6},"Mango":{"kcal":53.0,"p":1.0,"l":0.2,"c":12.6},"Melograno":{"kcal":63.0,"p":0.5,"l":0.2,"c":15.9},"Mele Annurca":{"kcal":40.0,"p":0.3,"l":0.1,"c":10.2},"Mele cotogne":{"kcal":26.0,"p":0.3,"l":0.1,"c":6.3},"Mele Deliziose":{"kcal":43.0,"p":0.2,"l":0.1,"c":11.1},"Mele Golden":{"kcal":43.0,"p":0.4,"l":0.1,"c":10.7},"Mele Granny Smith":{"kcal":38.0,"p":0.5,"l":0.1,"c":9.4},"Mele Imperatore":{"kcal":44.0,"p":0.2,"l":0.1,"c":11.3},"Mele Renetta":{"kcal":40.0,"p":0.3,"l":0.1,"c":10.0},"Mele":{"kcal":38.0,"p":0.2,"l":0,"c":10.0},"Mele (senza buccia)":{"kcal":53.0,"p":0.3,"l":0.1,"c":13.7},"Melone":{"kcal":33.0,"p":0.8,"l":0.2,"c":7.4},"Melone invernale":{"kcal":22.0,"p":0.5,"l":0.2,"c":4.9},"Mirtilli":{"kcal":25.0,"p":0.9,"l":0.2,"c":5.1},"More di gelso":{"kcal":36.0,"p":1.3,"l":0,"c":8.1},"More":{"kcal":36.0,"p":1.3,"l":0,"c":8.1},"Nespole":{"kcal":28.0,"p":0.4,"l":0.4,"c":6.1},"Cocco fresco":{"kcal":364.0,"p":3.5,"l":35.0,"c":9.4},"Papaya":{"kcal":28.0,"p":0.4,"l":0.1,"c":6.9},"Frutto della passione":{"kcal":36.0,"p":3.0,"l":0.3,"c":5.7},"Pere":{"kcal":35.0,"p":0.3,"l":0.1,"c":8.8},"Pesche (con buccia)":{"kcal":27.0,"p":0.8,"l":0.1,"c":6.1},"Pesche (senza buccia)":{"kcal":27.0,"p":0.8,"l":0.1,"c":6.1},"Pompelmo":{"kcal":26.0,"p":0.6,"l":0,"c":6.2},"Pompelmo rosa":{"kcal":38.0,"p":0.8,"l":0.1,"c":9.1},"Prugne":{"kcal":42.0,"p":0.5,"l":0.1,"c":10.5},"Prugne gialle":{"kcal":30.0,"p":0.5,"l":0.1,"c":7.2},"Prugne Regina Claudia":{"kcal":40.0,"p":0.8,"l":0.1,"c":9.7},"Prugne rosse":{"kcal":42.0,"p":0.5,"l":0.1,"c":10.5},"Ribes nero":{"kcal":28.0,"p":0.9,"l":0,"c":6.6},"Ribes rosso":{"kcal":21.0,"p":1.1,"l":0,"c":4.4},"Uva":{"kcal":61.0,"p":0.5,"l":0.1,"c":15.6},"Albicocche sciroppate":{"kcal":63.0,"p":0.4,"l":0.1,"c":16.1},"Ananas sciroppato":{"kcal":64.0,"p":0.5,"l":0,"c":16.5},"Ciliegie sciroppate":{"kcal":71.0,"p":0.5,"l":0,"c":18.5},"Frutta cotta zuccherata":{"kcal":85.0,"p":0.6,"l":0.2,"c":21.5},"Frutta cotta non zuccherata":{"kcal":50.0,"p":0.7,"l":0.2,"c":12.2},"Macedonia in scatola":{"kcal":57.0,"p":0.4,"l":0,"c":14.8},"Pere sciroppate":{"kcal":50.0,"p":0.2,"l":0,"c":13.2},"Pesche sciroppate":{"kcal":54.0,"p":0.5,"l":0,"c":14.0},"Prugne sciroppate":{"kcal":59.0,"p":0.3,"l":0,"c":15.5},"Purea di mela":{"kcal":57.0,"p":0.3,"l":0.2,"c":14.4},"Cocktail di frutta sciroppata":{"kcal":57.0,"p":0.4,"l":0.0,"c":14.8},"Albicocche disidratate":{"kcal":349.0,"p":5.6,"l":1.0,"c":84.6},"Polpa di albicocche secca":{"kcal":274.0,"p":5.0,"l":0.5,"c":66.5},"Anacardi":{"kcal":544.0,"p":15.0,"l":46.0,"c":18.8},"Arachidi tostate":{"kcal":598.0,"p":29.0,"l":50.0,"c":8.5},"Arachidi fresche":{"kcal":571.0,"p":26.0,"l":47.2,"c":11.2},"Arachidi tostate e salate":{"kcal":602.0,"p":24.5,"l":53.0,"c":7.1},"Carrube":{"kcal":207.0,"p":3.3,"l":0.7,"c":49.9},"Castagne":{"kcal":165.0,"p":2.9,"l":1.7,"c":36.7},"Castagne arrostite":{"kcal":193.0,"p":3.7,"l":2.4,"c":41.8},"Castagne bollite":{"kcal":120.0,"p":2.5,"l":1.3,"c":26.1},"Castagne secche":{"kcal":287.0,"p":6.0,"l":3.4,"c":62.0},"Datteri Deglet Noor secchi":{"kcal":253.0,"p":2.7,"l":0.6,"c":63.1},"Datteri Medjool secchi":{"kcal":265.0,"p":1.8,"l":0.2,"c":68.3},"Fichi secchi con mandorle":{"kcal":277.0,"p":5.2,"l":4.2,"c":58.2},"Fichi secchi al sole":{"kcal":232.0,"p":3.6,"l":2.1,"c":52.9},"Fichi secchi":{"kcal":256.0,"p":3.5,"l":2.7,"c":58.0},"Frutta secca (mista)":{"kcal":489.0,"p":12.9,"l":36.6,"c":28.8},"Frutta secca oleosa (mista)":{"kcal":630.0,"p":18.8,"l":59.5,"c":5.1},"Frutta secca zuccherina (mista)":{"kcal":279.0,"p":4.1,"l":2.0,"c":65.1},"Noci macadamia":{"kcal":735.0,"p":8.0,"l":76.0,"c":5.1},"Mandorle fresche":{"kcal":542.0,"p":16.0,"l":51.5,"c":4.0},"Mandorle":{"kcal":603.0,"p":22.0,"l":55.3,"c":4.6},"Mele disidratate":{"kcal":369.0,"p":1.3,"l":2.0,"c":92.2},"Polpa di mela secca":{"kcal":221.0,"p":0.9,"l":0.3,"c":57.2},"Nocciole":{"kcal":655.0,"p":13.8,"l":64.1,"c":6.1},"Noci pecan":{"kcal":705.0,"p":7.2,"l":71.8,"c":7.9},"Noci":{"kcal":582.0,"p":10.5,"l":57.7,"c":5.5},"Noci secche":{"kcal":689.0,"p":14.3,"l":68.1,"c":5.1},"Pesche disidratate":{"kcal":357.0,"p":4.8,"l":0.9,"c":88.0},"Pesche secche":{"kcal":275.0,"p":3.1,"l":0.7,"c":68.3},"Pinoli":{"kcal":595.0,"p":31.9,"l":50.3,"c":4.0},"Pistacchi freschi":{"kcal":406.0,"p":12.8,"l":32.6,"c":16.4},"Pistacchi":{"kcal":608.0,"p":18.1,"l":56.1,"c":8.1},"Pistacchi tostati e salati":{"kcal":601.0,"p":17.9,"l":55.4,"c":8.2},"Pistacchio di Bronte DOP":{"kcal":565.0,"p":24.3,"l":48.9,"c":7.3},"Prugne secche":{"kcal":220.0,"p":2.2,"l":0.5,"c":55.0},"Uvetta/uva sultanina":{"kcal":283.0,"p":1.9,"l":0.6,"c":72.0},"Albicocche secche":{"kcal":274.0,"p":5.0,"l":0.5,"c":66.5},"Cocco essiccato":{"kcal":604.0,"p":5.6,"l":62.0,"c":6.4},"Farina di castagne":{"kcal":326.0,"p":6.1,"l":3.7,"c":71.6},"Farina di cocco":{"kcal":604.0,"p":5.6,"l":62.0,"c":6.4},"Latte di cocco":{"kcal":236.0,"p":2.3,"l":23.8,"c":3.3},"Latte di mandorle":{"kcal":56.0,"p":1.3,"l":3.3,"c":5.5},"Succo d'arancia fresco":{"kcal":33.0,"p":0.6,"l":0,"c":8.1},"Succo di pompelmo fresco":{"kcal":31.0,"p":0.3,"l":0,"c":7.9},"Succo di albicocca":{"kcal":47.0,"p":0.3,"l":0.1,"c":12.0},"Succo d'ananas":{"kcal":50.0,"p":0.4,"l":0.1,"c":12.7},"Succo arancia e pompelmo":{"kcal":42.0,"p":0.6,"l":0.1,"c":10.2},"Succo d'arancia concentrato":{"kcal":184.0,"p":2.9,"l":0.5,"c":44.9},"Succo d'arancia (non zuccherato)":{"kcal":33.0,"p":0.5,"l":0,"c":8.2},"Succo di frutta (generico)":{"kcal":44.0,"p":0.3,"l":0,"c":11.4},"Succo ACE (arancia/carota/limone)":{"kcal":43.0,"p":0.3,"l":0,"c":11.2},"Succo di limone":{"kcal":27.0,"p":0.4,"l":0.3,"c":6.1},"Limone (succo fresco)":{"kcal":6.0,"p":0.2,"l":0,"c":1.4},"Succo di mandarino fresco":{"kcal":41.0,"p":0.5,"l":0.2,"c":9.9},"Succo di mandarino":{"kcal":36.0,"p":0.6,"l":0,"c":8.9},"Succo di mela":{"kcal":38.0,"p":0.1,"l":0.1,"c":9.9},"Succo di melograno":{"kcal":44.0,"p":0.2,"l":0,"c":11.6},"Succo di pera":{"kcal":57.0,"p":0.1,"l":0,"c":15.2},"Succo di pesca":{"kcal":51.0,"p":0.3,"l":0,"c":13.3},"Succo di pompelmo":{"kcal":34.0,"p":0.4,"l":0.1,"c":8.3},"Succo di pompelmo zuccherato":{"kcal":45.0,"p":0.6,"l":0.1,"c":11.0},"Succo d'uva":{"kcal":46.0,"p":0.3,"l":0.1,"c":11.7},"Succo d'uva con vitamina C":{"kcal":66.0,"p":0.3,"l":0,"c":17.3},"Succo tropicale":{"kcal":45.0,"p":0.2,"l":0.1,"c":11.5},"Latte di bufala":{"kcal":102.0,"p":4.4,"l":7.3,"c":5.1},"Latte di capra":{"kcal":76.0,"p":3.9,"l":4.8,"c":4.7},"Latte di pecora":{"kcal":103.0,"p":5.3,"l":6.9,"c":5.2},"Latte intero":{"kcal":64.0,"p":3.3,"l":3.6,"c":4.9},"Latte intero UHT":{"kcal":63.0,"p":3.3,"l":3.6,"c":4.7},"Latte intero vitaminizzato":{"kcal":58.0,"p":3.1,"l":3.0,"c":5.0},"Latte parzialmente scremato":{"kcal":46.0,"p":3.5,"l":1.5,"c":5.0},"Latte parz. scremato UHT":{"kcal":46.0,"p":3.2,"l":1.6,"c":5.1},"Latte parz. scremato vitaminizzato":{"kcal":45.0,"p":3.1,"l":1.5,"c":5.0},"Latte scremato":{"kcal":36.0,"p":3.6,"l":0.2,"c":5.3},"Latte scremato UHT":{"kcal":36.0,"p":3.7,"l":0.2,"c":5.2},"Yogurt di capra":{"kcal":60.0,"p":3.6,"l":2.9,"c":5.1},"Yogurt intero":{"kcal":66.0,"p":3.8,"l":3.9,"c":4.3},"Yogurt intero alla frutta":{"kcal":88.0,"p":2.8,"l":3.3,"c":12.6},"Yogurt intero zuccherato":{"kcal":99.0,"p":4.6,"l":3.5,"c":13.1},"Yogurt parz. scremato":{"kcal":43.0,"p":3.4,"l":1.7,"c":3.8},"Yogurt magro":{"kcal":36.0,"p":3.3,"l":0.9,"c":4.0},"Yogurt magro alla frutta (senza zucchero)":{"kcal":46.0,"p":4.0,"l":0.1,"c":7.8},"Yogurt magro alla frutta zuccherato":{"kcal":90.0,"p":4.1,"l":0.7,"c":17.9},"Yogurt greco intero":{"kcal":115.0,"p":6.4,"l":9.1,"c":2.0},"Farina lattea":{"kcal":394.0,"p":13.2,"l":6.3,"c":76.0},"Farina lattea con cereali":{"kcal":397.0,"p":12.4,"l":8.1,"c":73.1},"Latte concentrato":{"kcal":150.0,"p":8.4,"l":9.4,"c":8.5},"Latte condensato zuccherato":{"kcal":328.0,"p":8.7,"l":9.0,"c":56.5},"Latte in polvere intero":{"kcal":484.0,"p":25.7,"l":24.9,"c":42.0},"Latte in polvere parz. scremato":{"kcal":418.0,"p":28.8,"l":12.7,"c":50.2},"Latte in polvere scremato":{"kcal":351.0,"p":33.1,"l":0.9,"c":56.2},"Latte evaporato":{"kcal":134.0,"p":7.0,"l":8.2,"c":8.6},"Asiago":{"kcal":359.0,"p":31.4,"l":25.6,"c":0.8},"Bra":{"kcal":328.0,"p":30.7,"l":22.8,"c":0},"Brie":{"kcal":319.0,"p":19.3,"l":26.9,"c":0.0},"Burrata":{"kcal":287.0,"p":12.1,"l":25.7,"c":1.8},"Burrini":{"kcal":527.0,"p":22.1,"l":47.0,"c":4.1},"Butirro calabro":{"kcal":440.0,"p":24.7,"l":37.8,"c":0.3},"Caciocavallo":{"kcal":439.0,"p":37.7,"l":31.1,"c":2.3},"Caciocavallo affumicato":{"kcal":439.0,"p":37.7,"l":31.1,"c":2.3},"Cacioricotta di capra":{"kcal":178.0,"p":11.9,"l":14.3,"c":0.5},"Caciotta affumicata":{"kcal":368.0,"p":24.6,"l":29.6,"c":0.8},"Caciotta mista (ovino/vaccino)":{"kcal":384.0,"p":24.5,"l":31.0,"c":1.8},"Caciotta romana di pecora":{"kcal":364.0,"p":27.7,"l":27.3,"c":2.1},"Caciotta toscana":{"kcal":368.0,"p":24.6,"l":29.6,"c":0.8},"Caciottina fresca":{"kcal":263.0,"p":17.3,"l":21.3,"c":0.5},"Caciottina mista":{"kcal":370.0,"p":26.9,"l":28.5,"c":1.5},"Caciottina vaccina":{"kcal":324.0,"p":21.1,"l":25.4,"c":3.0},"Camembert":{"kcal":297.0,"p":20.9,"l":23.7,"c":0.0},"Cheddar":{"kcal":381.0,"p":25.0,"l":31.0,"c":0.5},"Crescenza":{"kcal":281.0,"p":16.1,"l":23.3,"c":1.9},"Dolce verde":{"kcal":266.0,"p":19.1,"l":20.0,"c":2.5},"Edam stagionato":{"kcal":345.0,"p":29.0,"l":25.0,"c":1.0},"Edam fresco":{"kcal":306.0,"p":26.0,"l":22.0,"c":1.0},"Emmental":{"kcal":403.0,"p":28.5,"l":30.6,"c":3.6},"Feta":{"kcal":250.0,"p":15.6,"l":20.2,"c":1.5},"Fiocchi di latte":{"kcal":115.0,"p":9.7,"l":7.1,"c":3.2},"Fior di latte":{"kcal":268.0,"p":20.6,"l":20.3,"c":0.7},"Fontina":{"kcal":343.0,"p":24.5,"l":26.9,"c":0.8},"Formaggino":{"kcal":309.0,"p":11.2,"l":26.9,"c":6.0},"Formaggino light":{"kcal":239.0,"p":14.7,"l":17.3,"c":6.5},"Formaggio gorgonzola e mascarpone":{"kcal":389.0,"p":13.4,"l":37.1,"c":0.7},"Formaggio spalmabile light":{"kcal":179.0,"p":9.2,"l":14.5,"c":3.1},"Formaggio molle (tipo Bel Paese)":{"kcal":374.0,"p":25.4,"l":30.2,"c":0.1},"Philadelphia":{"kcal":313.0,"p":8.6,"l":31.0,"c":0.0},"Gorgonzola":{"kcal":324.0,"p":19.1,"l":27.1,"c":1.0},"Gorgonzola con noci":{"kcal":338.0,"p":18.9,"l":28.7,"c":1.2},"Gouda fresco":{"kcal":344.0,"p":23.0,"l":28.0,"c":0},"Gouda stagionato":{"kcal":361.0,"p":25.0,"l":29.0,"c":0},"Grana Padano":{"kcal":406.0,"p":33.9,"l":28.5,"c":3.7},"Groviera":{"kcal":389.0,"p":30.6,"l":29.0,"c":1.5},"Italico":{"kcal":316.0,"p":21.2,"l":25.2,"c":1.2},"Formaggio latteria":{"kcal":456.0,"p":30.7,"l":36.4,"c":1.4},"Mascarpone":{"kcal":455.0,"p":7.6,"l":47.0,"c":0.3},"Montasio":{"kcal":411.0,"p":30.3,"l":32.2,"c":0},"Mozzarella di bufala":{"kcal":288.0,"p":16.7,"l":24.4,"c":0.4},"Mozzarella":{"kcal":253.0,"p":18.7,"l":19.5,"c":0.7},"Parmigiano Reggiano":{"kcal":387.0,"p":33.5,"l":28.1,"c":0.0},"Pastorella":{"kcal":364.0,"p":26.9,"l":28.5,"c":0},"Pecorino":{"kcal":392.0,"p":25.8,"l":32.0,"c":0.2},"Pecorino da grattugiare":{"kcal":379.0,"p":29.5,"l":28.9,"c":0.2},"Pecorino Romano":{"kcal":385.0,"p":28.3,"l":29.5,"c":1.8},"Pecorino Siciliano":{"kcal":427.0,"p":28.9,"l":33.6,"c":2.4},"Pecorino fresco":{"kcal":342.0,"p":26.0,"l":25.4,"c":2.4},"Provola affumicata":{"kcal":264.0,"p":21.2,"l":19.6,"c":0.7},"Provoloncino dolce":{"kcal":347.0,"p":25.0,"l":26.6,"c":2.0},"Provolone":{"kcal":374.0,"p":28.1,"l":28.2,"c":2.0},"Provolone piccante":{"kcal":399.0,"p":29.4,"l":30.4,"c":2.0},"Ricotta di bufala":{"kcal":212.0,"p":10.5,"l":17.3,"c":3.7},"Ricotta di pecora":{"kcal":157.0,"p":9.5,"l":11.5,"c":4.2},"Ricotta (vaccina)":{"kcal":146.0,"p":8.8,"l":10.9,"c":3.5},"Ricotta mista":{"kcal":151.0,"p":8.8,"l":11.5,"c":3.2},"Ricotta intera (tipo tedesco)":{"kcal":109.0,"p":12.5,"l":5.1,"c":3.6},"Ricotta magra":{"kcal":71.0,"p":13.5,"l":0.2,"c":4.1},"Robiola":{"kcal":338.0,"p":20.0,"l":27.7,"c":2.3},"Roquefort":{"kcal":375.0,"p":19.7,"l":32.9,"c":0},"Scamorza":{"kcal":334.0,"p":25.0,"l":25.6,"c":1.0},"Scamorza affumicata":{"kcal":334.0,"p":25.0,"l":25.6,"c":1.0},"Sottilette":{"kcal":330.0,"p":20.8,"l":27.0,"c":0.9},"Stracchino":{"kcal":300.0,"p":18.5,"l":25.1,"c":0.0},"Taleggio":{"kcal":315.0,"p":19.0,"l":26.2,"c":0.9},"Avena (chicchi)":{"kcal":339.0,"p":16.9,"l":6.9,"c":55.7},"Grano duro":{"kcal":314.0,"p":13.0,"l":2.9,"c":63.0},"Grano tenero":{"kcal":319.0,"p":12.3,"l":2.6,"c":65.8},"Insalata di riso (pronta)":{"kcal":187.0,"p":5.9,"l":11.5,"c":16.1},"Mais":{"kcal":355.0,"p":9.2,"l":3.8,"c":75.8},"Mais dolce in scatola":{"kcal":122.0,"p":2.9,"l":1.2,"c":26.6},"Mais dolce crudo":{"kcal":94.0,"p":3.4,"l":1.8,"c":17.0},"Orzo perlato":{"kcal":319.0,"p":10.4,"l":1.4,"c":70.5},"Riso integrale":{"kcal":357.0,"p":6.7,"l":2.8,"c":81.3},"Riso bianco":{"kcal":362.0,"p":7.0,"l":0.6,"c":87.6},"Riso parboiled":{"kcal":333.0,"p":6.7,"l":1.0,"c":79.3},"Farro":{"kcal":335.0,"p":15.1,"l":2.5,"c":67.1},"Grano saraceno":{"kcal":314.0,"p":12.4,"l":3.3,"c":62.5},"Miglio":{"kcal":356.0,"p":11.8,"l":3.9,"c":72.9},"Miglio decorticato":{"kcal":360.0,"p":11.0,"l":4.2,"c":74.1},"Amido (generico)":{"kcal":379.0,"p":0.4,"l":0.2,"c":100.1},"Farina d'avena":{"kcal":388.0,"p":12.6,"l":7.1,"c":72.9},"Farina integrale":{"kcal":321.0,"p":11.9,"l":1.9,"c":68.4},"Farina tipo 0":{"kcal":343.0,"p":11.5,"l":1.0,"c":76.9},"Farina tipo 00":{"kcal":343.0,"p":11.0,"l":0.7,"c":78.0},"Farina di grano duro":{"kcal":305.0,"p":12.6,"l":2.8,"c":61.1},"Farina di grano saraceno":{"kcal":364.0,"p":8.1,"l":1.5,"c":84.9},"Farina di mais":{"kcal":365.0,"p":8.7,"l":2.7,"c":81.5},"Farina d'orzo":{"kcal":360.0,"p":10.6,"l":1.9,"c":80.0},"Farina di riso":{"kcal":363.0,"p":7.3,"l":0.5,"c":87.8},"Farina di segale integrale":{"kcal":335.0,"p":8.2,"l":2.0,"c":75.9},"Farina di segale semi-integrale":{"kcal":299.0,"p":8.3,"l":1.3,"c":67.8},"Crusca di frumento soffiata":{"kcal":354.0,"p":9.2,"l":1.0,"c":82.3},"Polenta (cotta)":{"kcal":183.0,"p":4.4,"l":1.4,"c":40.8},"Semola di grano duro":{"kcal":342.0,"p":11.5,"l":0.5,"c":77.6},"Amido di mais (maizena)":{"kcal":327.0,"p":0.3,"l":0.0,"c":86.8},"Cereali soffiati (muesli compresso)":{"kcal":342.0,"p":10.7,"l":2.0,"c":74.9},"Crusca di grano":{"kcal":206.0,"p":14.1,"l":5.5,"c":26.8},"Fiocchi d'avena":{"kcal":375.0,"p":8.0,"l":7.5,"c":73.5},"Fiocchi di crusca":{"kcal":319.0,"p":10.2,"l":1.9,"c":69.7},"Cornflakes":{"kcal":364.0,"p":6.6,"l":0.8,"c":88.1},"Fiocchi di riso":{"kcal":328.0,"p":6.6,"l":1.2,"c":77.5},"Fiocchi d'orzo":{"kcal":360.0,"p":10.6,"l":1.9,"c":80.0},"Germe di grano":{"kcal":408.0,"p":28.0,"l":10.0,"c":55.0},"Muesli":{"kcal":362.0,"p":10.6,"l":5.9,"c":71.1},"Popcorn":{"kcal":383.0,"p":12.7,"l":5.0,"c":76.7},"Riso soffiato":{"kcal":369.0,"p":6.1,"l":0.9,"c":89.7},"Pasta all'uovo fresca":{"kcal":309.0,"p":11.8,"l":2.8,"c":63.2},"Pasta all'uovo secca":{"kcal":368.0,"p":13.0,"l":2.4,"c":78.6},"Pasta (semola)":{"kcal":356.0,"p":10.8,"l":0.3,"c":82.8},"Pasta integrale":{"kcal":324.0,"p":13.4,"l":2.5,"c":66.2},"Tortellini freschi":{"kcal":310.0,"p":12.2,"l":7.1,"c":52.6},"Tortellini secchi":{"kcal":389.0,"p":15.7,"l":10.8,"c":61.0},"Crackers al formaggio":{"kcal":502.0,"p":9.8,"l":25.5,"c":62.1},"Crackers integrali":{"kcal":408.0,"p":8.8,"l":17.2,"c":58.1},"Crackers non salati":{"kcal":441.0,"p":9.5,"l":16.3,"c":68.3},"Crackers salati":{"kcal":428.0,"p":9.4,"l":10.0,"c":80.1},"Crackers senza grassi":{"kcal":355.0,"p":10.5,"l":1.6,"c":79.6},"Cracotte":{"kcal":348.0,"p":10.5,"l":1.2,"c":78.8},"Grissini":{"kcal":433.0,"p":12.3,"l":13.9,"c":69.0},"Grissini integrali":{"kcal":408.0,"p":8.8,"l":17.2,"c":58.1},"Salatini":{"kcal":514.0,"p":7.2,"l":24.3,"c":71.1},"Crackers alla soia":{"kcal":412.0,"p":13.1,"l":11.7,"c":67.7},"Focaccia":{"kcal":292.0,"p":8.4,"l":11.8,"c":40.7},"Pan carrè":{"kcal":241.0,"p":8.2,"l":3.6,"c":46.9},"Pane al latte":{"kcal":346.0,"p":8.6,"l":7.6,"c":64.9},"Pane alle olive":{"kcal":286.0,"p":7.0,"l":6.7,"c":52.6},"Pane comune":{"kcal":277.0,"p":8.1,"l":0.2,"c":64.7},"Pane condito":{"kcal":297.0,"p":13.3,"l":3.4,"c":56.9},"Pane di grano duro":{"kcal":245.0,"p":10.1,"l":2.3,"c":49.1},"Pane misto grano e segale":{"kcal":214.0,"p":6.2,"l":1.1,"c":47.7},"Pane di segale":{"kcal":220.0,"p":8.3,"l":1.7,"c":45.8},"Pane di segale biscottato":{"kcal":245.0,"p":9.4,"l":3.6,"c":46.7},"Pane di soia":{"kcal":266.0,"p":12.0,"l":6.8,"c":41.7},"Pangrattato":{"kcal":354.0,"p":11.6,"l":1.9,"c":77.5},"Pane integrale":{"kcal":243.0,"p":7.5,"l":1.3,"c":53.8},"Pane tostato":{"kcal":299.0,"p":8.8,"l":0.5,"c":69.2},"Pane bianco (tipo 0)":{"kcal":277.0,"p":8.1,"l":0.5,"c":64.0},"Pane bianco (00)":{"kcal":290.0,"p":8.2,"l":0.4,"c":67.5},"Pane di tipo 1":{"kcal":267.0,"p":8.9,"l":0.6,"c":60.3},"Panino all'olio":{"kcal":302.0,"p":7.7,"l":5.8,"c":58.3},"Pizza al pomodoro":{"kcal":247.0,"p":4.0,"l":4.0,"c":51.9},"Pizza margherita":{"kcal":271.0,"p":5.6,"l":5.6,"c":52.9},"Pane al malto":{"kcal":267.0,"p":8.3,"l":2.4,"c":56.6},"Pane azzimo":{"kcal":377.0,"p":10.7,"l":0.8,"c":87.1},"Rosetta":{"kcal":269.0,"p":9.0,"l":1.9,"c":57.6},"Bresaola":{"kcal":151.0,"p":32.0,"l":2.6,"c":0.0},"Ciccioli":{"kcal":523.0,"p":40.8,"l":40.0,"c":0.0},"Capocollo/coppa":{"kcal":450.0,"p":20.8,"l":40.2,"c":1.4},"Coppa di Parma":{"kcal":398.0,"p":23.6,"l":33.5,"c":0.6},"Cotechino bollito":{"kcal":307.0,"p":21.1,"l":24.7,"c":0.0},"Cotechino crudo":{"kcal":450.0,"p":17.2,"l":42.3,"c":0.0},"Mortadella":{"kcal":317.0,"p":14.7,"l":28.1,"c":1.5},"Mortadella mista":{"kcal":388.0,"p":13.3,"l":37.0,"c":0.5},"Pancetta/bacon":{"kcal":276.0,"p":15.8,"l":23.6,"c":0},"Pancetta coppata":{"kcal":393.0,"p":20.9,"l":34.2,"c":0.7},"Pancetta magra":{"kcal":314.0,"p":21.7,"l":25.3,"c":0.0},"Pancetta tesa":{"kcal":336.0,"p":20.9,"l":28.1,"c":0.0},"Prosciutto cotto":{"kcal":215.0,"p":19.8,"l":14.7,"c":0.9},"Prosciutto cotto affumicato":{"kcal":215.0,"p":19.8,"l":14.7,"c":0.9},"Prosciutto cotto affumicato magro":{"kcal":132.0,"p":22.2,"l":4.4,"c":1.0},"Prosciutto cotto magro (senza grasso)":{"kcal":132.0,"p":22.2,"l":4.4,"c":1.0},"Prosciutto crudo di montagna":{"kcal":303.0,"p":26.2,"l":22.0,"c":0.0},"Prosciutto crudo di Parma":{"kcal":268.0,"p":25.5,"l":18.4,"c":0.0},"Prosciutto di Parma magro":{"kcal":145.0,"p":27.5,"l":3.9,"c":0.0},"Prosciutto crudo":{"kcal":284.0,"p":26.6,"l":19.7,"c":0},"Prosciutto crudo magro (senza grasso)":{"kcal":147.0,"p":27.9,"l":3.9,"c":0},"Prosciutto San Daniele":{"kcal":320.0,"p":28.3,"l":23.0,"c":0.0},"Prosciutto San Daniele magro":{"kcal":136.0,"p":26.8,"l":3.2,"c":0.0},"Prosciutto crudo affumicato":{"kcal":284.0,"p":26.6,"l":19.7,"c":0},"Prosciutto crudo affumicato magro":{"kcal":147.0,"p":27.9,"l":3.9,"c":0},"Prosciutto crudo disossato":{"kcal":224.0,"p":26.9,"l":12.9,"c":0.0},"Prosciutto crudo disossato magro":{"kcal":159.0,"p":29.3,"l":4.6,"c":0.0},"Prosciutto crudo (gambuccio)":{"kcal":306.0,"p":26.2,"l":22.4,"c":0.0},"Salame Brianza":{"kcal":384.0,"p":26.5,"l":30.5,"c":1.0},"Salame cacciatore":{"kcal":424.0,"p":28.5,"l":34.0,"c":1.2},"Salame da cuocere":{"kcal":326.0,"p":36.0,"l":19.6,"c":1.5},"Salame":{"kcal":475.0,"p":22.5,"l":42.8,"c":0},"Salame misto":{"kcal":454.0,"p":27.4,"l":38.3,"c":0},"Salame Fabriano":{"kcal":420.0,"p":26.5,"l":34.3,"c":1.5},"Salame Felino":{"kcal":375.0,"p":30.5,"l":27.9,"c":0.5},"Salame Milano":{"kcal":392.0,"p":26.7,"l":31.1,"c":1.5},"Salame Napoli":{"kcal":359.0,"p":26.7,"l":27.3,"c":1.7},"Salame nostrano":{"kcal":370.0,"p":27.3,"l":28.5,"c":1.1},"Salame ungherese":{"kcal":405.0,"p":24.2,"l":34.0,"c":0.7},"Salsiccia di fegato":{"kcal":424.0,"p":12.4,"l":41.2,"c":0.9},"Salsiccia mista fresca":{"kcal":393.0,"p":14.2,"l":37.4,"c":0},"Salsiccia di maiale saltata":{"kcal":324.0,"p":22.2,"l":26.1,"c":0.0},"Salsiccia di maiale fresca":{"kcal":304.0,"p":15.4,"l":26.7,"c":0.6},"Salsiccia secca":{"kcal":514.0,"p":22.0,"l":47.3,"c":0.0},"Soprassata":{"kcal":494.0,"p":17.0,"l":47.3,"c":0},"Speck":{"kcal":303.0,"p":28.3,"l":20.9,"c":0.5},"Wurstel (maiale)":{"kcal":270.0,"p":13.7,"l":23.3,"c":1.4},"Wurstel di pollo":{"kcal":253.0,"p":12.9,"l":19.5,"c":6.8},"Wurstel di tacchino":{"kcal":222.0,"p":14.3,"l":17.7,"c":1.5},"Wurstel saltato":{"kcal":313.0,"p":16.4,"l":26.9,"c":1.3},"Zampone":{"kcal":361.0,"p":19.1,"l":31.6,"c":0.0},"Zampone bollito":{"kcal":319.0,"p":21.4,"l":25.9,"c":0.0},"Carne di cavallo":{"kcal":145.0,"p":19.8,"l":6.6,"c":1.7},"Coscia di capriolo":{"kcal":103.0,"p":22.2,"l":1.6,"c":0},"Schiena di capriolo":{"kcal":124.0,"p":22.4,"l":3.6,"c":0.6},"Carne di cervo":{"kcal":91.0,"p":21.0,"l":0.8,"c":0.0},"Carne di daino":{"kcal":95.0,"p":21.0,"l":1.2,"c":0.0},"Lumache":{"kcal":67.0,"p":12.9,"l":1.7,"c":0.0},"Rana":{"kcal":64.0,"p":15.5,"l":0.2,"c":0.0},"Carne di struzzo":{"kcal":92.0,"p":20.9,"l":0.9,"c":0.0},"Carne di struzzo al forno":{"kcal":101.0,"p":22.2,"l":1.4,"c":0.0},"Cuore di cavallo":{"kcal":146.0,"p":18.7,"l":7.7,"c":0.6},"Fegato di cavallo":{"kcal":145.0,"p":22.4,"l":4.0,"c":5.3},"Manzo grasso (con grasso)":{"kcal":204.0,"p":18.1,"l":14.6,"c":0},"Manzo magro (con grasso)":{"kcal":113.0,"p":21.3,"l":3.1,"c":0},"Manzo semigrasso (con grasso)":{"kcal":160.0,"p":19.1,"l":9.3,"c":0},"Manzo (collo/spalla anteriore)":{"kcal":132.0,"p":20.3,"l":5.7,"c":0.0},"Costata di manzo":{"kcal":140.0,"p":21.3,"l":6.1,"c":0.0},"Manzo magro (fesa)":{"kcal":103.0,"p":21.8,"l":1.8,"c":0.0},"Filetto di manzo":{"kcal":127.0,"p":20.5,"l":5.0,"c":0.0},"Manzo (geretto/stinco)":{"kcal":112.0,"p":20.9,"l":3.2,"c":0.0},"Manzo magro (girello)":{"kcal":110.0,"p":21.3,"l":2.8,"c":0.0},"Lombata di manzo":{"kcal":134.0,"p":21.8,"l":5.2,"c":0.0},"Manzo magro (noce)":{"kcal":106.0,"p":21.3,"l":2.3,"c":0.0},"Manzo (pancia/biancostato)":{"kcal":171.0,"p":19.7,"l":10.2,"c":0.0},"Manzo magro (scamone)":{"kcal":119.0,"p":21.4,"l":3.7,"c":0.0},"Manzo magro (sottofesa)":{"kcal":111.0,"p":22.0,"l":2.6,"c":0.0},"Manzo (spalla)":{"kcal":108.0,"p":21.5,"l":2.4,"c":0.0},"Manzo (tagli anteriori)":{"kcal":145.0,"p":20.5,"l":7.0,"c":0.0},"Manzo grasso (tagli misti)":{"kcal":155.0,"p":20.5,"l":8.2,"c":0},"Manzo magro (tagli misti)":{"kcal":108.0,"p":21.6,"l":2.4,"c":0},"Manzo semigrasso (tagli misti)":{"kcal":125.0,"p":21.0,"l":4.6,"c":0},"Manzo (tagli posteriori)":{"kcal":117.0,"p":21.5,"l":3.4,"c":0.0},"Vitello magro":{"kcal":92.0,"p":20.7,"l":1.0,"c":0},"Vitello semigrasso":{"kcal":144.0,"p":20.3,"l":7.0,"c":0},"Filetto di vitello":{"kcal":107.0,"p":20.7,"l":2.7,"c":0.0},"Manzo in gelatina (scatola)":{"kcal":67.0,"p":12.6,"l":1.8,"c":0.0},"Lingua salmistrata di manzo":{"kcal":260.0,"p":22.5,"l":18.8,"c":0.2},"Carne bovina in scatola":{"kcal":141.0,"p":16.5,"l":8.3,"c":0.0},"Corned beef (scatola)":{"kcal":219.0,"p":23.2,"l":14.0,"c":0.0},"Cervello di manzo":{"kcal":157.0,"p":10.0,"l":12.7,"c":0.8},"Cuore di manzo":{"kcal":123.0,"p":16.8,"l":6.0,"c":0.5},"Fegato di manzo":{"kcal":142.0,"p":20.0,"l":4.4,"c":5.9},"Lingua di manzo":{"kcal":232.0,"p":17.1,"l":18.0,"c":0.4},"Midollo osseo":{"kcal":822.0,"p":3.2,"l":89.9,"c":0},"Milza di manzo":{"kcal":107.0,"p":18.5,"l":3.7,"c":0.0},"Polmone di manzo":{"kcal":75.0,"p":14.0,"l":2.1,"c":0.0},"Rene di manzo":{"kcal":118.0,"p":18.4,"l":4.6,"c":0.8},"Sangue di manzo":{"kcal":72.0,"p":17.8,"l":0.1,"c":0.1},"Trippa":{"kcal":108.0,"p":15.8,"l":5.0,"c":0.0},"Coratella di vitello":{"kcal":100.0,"p":17.1,"l":3.2,"c":0.8},"Anatra (con pelle)":{"kcal":159.0,"p":21.4,"l":8.2,"c":0.0},"Fagiano":{"kcal":144.0,"p":24.3,"l":5.2,"c":0.0},"Faraona (con pelle)":{"kcal":152.0,"p":23.4,"l":6.5,"c":0},"Coscia di faraona (con pelle)":{"kcal":133.0,"p":24.3,"l":3.8,"c":0.3},"Coscia di faraona (senza pelle)":{"kcal":127.0,"p":24.0,"l":3.3,"c":0.3},"Coscia di faraona al forno":{"kcal":194.0,"p":34.4,"l":6.1,"c":0.3},"Petto di faraona":{"kcal":121.0,"p":25.8,"l":1.9,"c":0.2},"Petto di faraona al forno":{"kcal":146.0,"p":30.7,"l":2.5,"c":0.2},"Gallina":{"kcal":194.0,"p":20.9,"l":12.3,"c":0.0},"Oca":{"kcal":373.0,"p":15.8,"l":34.4,"c":0.0},"Piccione adulto":{"kcal":187.0,"p":18.4,"l":12.5,"c":0.3},"Piccione giovane":{"kcal":138.0,"p":22.1,"l":5.5,"c":0.0},"Ala di pollo (con pelle)":{"kcal":196.0,"p":16.7,"l":14.3,"c":0.0},"Ala di pollo al forno":{"kcal":283.0,"p":31.7,"l":17.4,"c":0.0},"Ala di pollo (senza pelle)":{"kcal":193.0,"p":20.3,"l":12.4,"c":0},"Coscia di pollo (con pelle)":{"kcal":125.0,"p":18.4,"l":5.7,"c":0.0},"Coscia di pollo con pelle al forno":{"kcal":201.0,"p":31.2,"l":8.5,"c":0.0},"Coscia di pollo (senza pelle)":{"kcal":107.0,"p":18.5,"l":3.7,"c":0.0},"Coscia di pollo al forno":{"kcal":175.0,"p":29.9,"l":6.2,"c":0.0},"Pollo intero (con pelle)":{"kcal":171.0,"p":19.0,"l":10.6,"c":0.0},"Pollo arrosto (con pelle)":{"kcal":246.0,"p":28.3,"l":14.7,"c":0.0},"Pollo al forno (con pelle)":{"kcal":200.0,"p":27.1,"l":10.2,"c":0.0},"Pollo intero (senza pelle)":{"kcal":110.0,"p":19.4,"l":3.6,"c":0.0},"Pollo arrosto (senza pelle)":{"kcal":206.0,"p":28.9,"l":10.0,"c":0.0},"Pollo al forno (senza pelle)":{"kcal":160.0,"p":27.9,"l":5.4,"c":0},"Petto di pollo (senza pelle)":{"kcal":100.0,"p":23.3,"l":0.8,"c":0.0},"Petto di pollo saltato":{"kcal":129.0,"p":30.2,"l":0.9,"c":0.0},"Sovracoscia di pollo (con pelle)":{"kcal":196.0,"p":17.4,"l":14.0,"c":0.0},"Sovracoscia di pollo con pelle al forno":{"kcal":219.0,"p":26.7,"l":12.5,"c":0.0},"Sovracoscia di pollo (senza pelle)":{"kcal":132.0,"p":18.7,"l":6.3,"c":0.0},"Sovracoscia di pollo al forno":{"kcal":188.0,"p":28.3,"l":8.3,"c":0},"Quaglia":{"kcal":161.0,"p":25.0,"l":6.8,"c":0.0},"Coscia di starna":{"kcal":113.0,"p":22.3,"l":2.6,"c":0},"Ala di tacchina":{"kcal":241.0,"p":22.3,"l":16.9,"c":0},"Coscia di tacchina":{"kcal":253.0,"p":20.9,"l":18.7,"c":0.4},"Petto di tacchina":{"kcal":145.0,"p":22.0,"l":6.2,"c":0.4},"Ala di tacchino":{"kcal":193.0,"p":22.3,"l":11.5,"c":0},"Petto di tacchino (senza pelle)":{"kcal":107.0,"p":24.0,"l":1.2,"c":0.0},"Petto di tacchino saltato":{"kcal":131.0,"p":29.6,"l":1.4,"c":0.0},"Coscia di tacchino (con pelle)":{"kcal":126.0,"p":17.9,"l":6.0,"c":0.0},"Coscia di tacchino con pelle al forno":{"kcal":190.0,"p":26.7,"l":9.3,"c":0.0},"Coscia di tacchino (senza pelle)":{"kcal":113.0,"p":18.0,"l":4.6,"c":0.0},"Coscia di tacchino al forno":{"kcal":190.0,"p":28.0,"l":8.7,"c":0.0},"Tacchino intero (con pelle)":{"kcal":135.0,"p":18.2,"l":6.9,"c":0.0},"Tacchino intero (senza pelle)":{"kcal":109.0,"p":21.9,"l":2.4,"c":0.0},"Sovracoscia di tacchino (senza pelle)":{"kcal":120.0,"p":18.5,"l":5.1,"c":0.0},"Sovracoscia di tacchino al forno":{"kcal":182.0,"p":30.2,"l":6.8,"c":0.0},"Tordo":{"kcal":142.0,"p":18.3,"l":7.7,"c":0},"Patè di fegato":{"kcal":341.0,"p":12.7,"l":31.7,"c":1.3},"Fegatini di pollo":{"kcal":122.0,"p":20.5,"l":4.5,"c":0},"Rigaglie di pollo":{"kcal":196.0,"p":13.9,"l":15.6,"c":0.1},"Patè di coniglio":{"kcal":346.0,"p":13.0,"l":32.2,"c":1.1},"Patè di pollo":{"kcal":289.0,"p":11.1,"l":26.2,"c":2.3},"Patè di prosciutto":{"kcal":358.0,"p":11.3,"l":34.3,"c":1.1},"Maiale grasso":{"kcal":268.0,"p":17.2,"l":22.1,"c":0},"Maiale semigrasso":{"kcal":141.0,"p":19.9,"l":6.8,"c":0},"Bistecca di maiale magra":{"kcal":157.0,"p":21.3,"l":8.0,"c":0.0},"Bistecca di maiale saltata":{"kcal":247.0,"p":30.1,"l":14.1,"c":0.0},"Coscia di maiale leggera":{"kcal":110.0,"p":20.2,"l":3.2,"c":0.0},"Lombo di maiale leggero":{"kcal":146.0,"p":20.7,"l":7.0,"c":0.0},"Spalla di maiale leggera":{"kcal":133.0,"p":19.0,"l":6.3,"c":0.0},"Coscia di maiale":{"kcal":128.0,"p":20.4,"l":5.1,"c":0.0},"Lombo di maiale":{"kcal":172.0,"p":20.8,"l":9.9,"c":0.0},"Spalla di maiale":{"kcal":156.0,"p":19.0,"l":8.9,"c":0.0},"Cuore di maiale":{"kcal":159.0,"p":18.3,"l":9.4,"c":0.4},"Fegato di maiale":{"kcal":140.0,"p":22.8,"l":4.8,"c":1.5},"Sangue di maiale":{"kcal":75.0,"p":18.5,"l":0.1,"c":0.1},"Coniglio grasso":{"kcal":204.0,"p":18.1,"l":14.4,"c":0.4},"Coniglio magro":{"kcal":102.0,"p":23.7,"l":0.6,"c":0.6},"Coniglio semigrasso":{"kcal":138.0,"p":22.1,"l":5.3,"c":0.5},"Coscia di coniglio":{"kcal":137.0,"p":21.0,"l":5.9,"c":0.0},"Coniglio intero":{"kcal":118.0,"p":19.9,"l":4.3,"c":0.0},"Coniglio cotto":{"kcal":166.0,"p":27.9,"l":6.0,"c":0.0},"Coniglio surgelato":{"kcal":116.0,"p":20.3,"l":3.9,"c":0.0},"Coscia di lepre":{"kcal":120.0,"p":22.8,"l":3.2,"c":0},"Frattaglie di coniglio":{"kcal":147.0,"p":18.7,"l":7.9,"c":0.4},"Agnello grasso":{"kcal":279.0,"p":18.0,"l":23.0,"c":0.0},"Costoletta di agnello con grasso":{"kcal":385.0,"p":14.6,"l":36.3,"c":0},"Agnello magro":{"kcal":121.0,"p":20.0,"l":4.6,"c":0},"Agnello semigrasso":{"kcal":211.0,"p":19.0,"l":15.0,"c":0},"Coscia di agnello":{"kcal":102.0,"p":20.0,"l":2.5,"c":0.0},"Coscia di agnello al forno":{"kcal":165.0,"p":31.1,"l":4.5,"c":0.0},"Costoletta di agnello":{"kcal":106.0,"p":20.4,"l":2.7,"c":0.0},"Costoletta di agnello al forno":{"kcal":153.0,"p":28.7,"l":4.2,"c":0},"Agnello (senza grasso)":{"kcal":159.0,"p":20.0,"l":8.8,"c":0},"Agnello al forno":{"kcal":270.0,"p":35.6,"l":14.2,"c":0.0},"Capretto":{"kcal":122.0,"p":19.2,"l":5.0,"c":0.0},"Castrato grasso":{"kcal":332.0,"p":16.5,"l":29.5,"c":0},"Castrato magro":{"kcal":122.0,"p":17.0,"l":6.0,"c":0},"Castrato semigrasso":{"kcal":227.0,"p":16.8,"l":17.8,"c":0},"Pecora":{"kcal":293.0,"p":17.0,"l":25.0,"c":0},"Coratella di agnello":{"kcal":109.0,"p":15.7,"l":4.7,"c":1.0},"Cuore di agnello":{"kcal":134.0,"p":16.9,"l":7.2,"c":0.4},"Fegato di agnello":{"kcal":135.0,"p":19.5,"l":5.5,"c":2.0},"Alici/acciughe":{"kcal":96.0,"p":16.8,"l":2.6,"c":1.5},"Anguilla d'allevamento":{"kcal":319.0,"p":14.2,"l":28.9,"c":0.5},"Anguilla di fiume":{"kcal":261.0,"p":11.8,"l":23.7,"c":0.1},"Anguilla di mare":{"kcal":237.0,"p":14.6,"l":19.6,"c":0.7},"Aringa":{"kcal":216.0,"p":16.5,"l":16.7,"c":0.0},"Bastoncini di pesce surgelati":{"kcal":191.0,"p":11.0,"l":10.1,"c":15.0},"Boga":{"kcal":87.0,"p":18.3,"l":1.2,"c":0.8},"Capitone":{"kcal":247.0,"p":13.0,"l":21.5,"c":0.5},"Carpa":{"kcal":140.0,"p":18.9,"l":7.1,"c":0.0},"Cefalo/muggine":{"kcal":127.0,"p":15.8,"l":6.8,"c":0.7},"Cernia":{"kcal":80.0,"p":17.9,"l":0.7,"c":0.6},"Cernia di fondo":{"kcal":125.0,"p":15.6,"l":6.7,"c":0.6},"Cernia surgelata":{"kcal":88.0,"p":17.0,"l":2.0,"c":0.5},"Coregone":{"kcal":135.0,"p":19.0,"l":6.5,"c":0.1},"Corvina":{"kcal":88.0,"p":20.0,"l":0.8,"c":0.2},"Dentice":{"kcal":101.0,"p":16.7,"l":3.5,"c":0.7},"Dentice surgelato":{"kcal":103.0,"p":17.2,"l":3.5,"c":0.7},"Halibut":{"kcal":104.0,"p":20.8,"l":2.3,"c":0.0},"Latterini":{"kcal":145.0,"p":14.6,"l":9.6,"c":0},"Luccio":{"kcal":81.0,"p":18.7,"l":0.6,"c":0.1},"Pesce molo":{"kcal":72.0,"p":17.4,"l":0.3,"c":0.0},"Merluzzo":{"kcal":71.0,"p":17.0,"l":0.3,"c":0.0},"Merluzzo surgelato":{"kcal":75.0,"p":17.3,"l":0.6,"c":0.0},"Filetti di merluzzo surgelati":{"kcal":68.0,"p":15.6,"l":0.6,"c":0.0},"Merluzzo al forno":{"kcal":92.0,"p":20.9,"l":0.9,"c":0.0},"Merluzzo al microonde":{"kcal":107.0,"p":24.8,"l":0.9,"c":0.0},"Mormora":{"kcal":97.0,"p":18.0,"l":1.9,"c":2.0},"Occhiata":{"kcal":117.0,"p":19.0,"l":3.7,"c":2.0},"Ombrina surgelata":{"kcal":78.0,"p":17.2,"l":0.7,"c":0.8},"Orata d'allevamento (filetti)":{"kcal":159.0,"p":19.7,"l":8.4,"c":1.2},"Orata selvatica (filetti)":{"kcal":121.0,"p":20.7,"l":3.8,"c":1.0},"Orata surgelata":{"kcal":94.0,"p":19.8,"l":1.2,"c":1.0},"Pagello":{"kcal":101.0,"p":21.0,"l":1.9,"c":0.0},"Pagello bocca d'oro":{"kcal":118.0,"p":20.0,"l":3.0,"c":3.0},"Palombo":{"kcal":80.0,"p":16.0,"l":1.2,"c":1.3},"Pesce gatto":{"kcal":92.0,"p":15.5,"l":3.3,"c":0.2},"Pesce (generico, con lisca)":{"kcal":105.0,"p":17.4,"l":3.7,"c":0.7},"Pesce persico":{"kcal":75.0,"p":15.4,"l":1.5,"c":0},"Pesce spada":{"kcal":109.0,"p":16.9,"l":4.2,"c":1.0},"Rana pescatrice (coda di rospo)":{"kcal":62.0,"p":12.8,"l":1.0,"c":0.6},"Razza":{"kcal":68.0,"p":14.2,"l":0.9,"c":0.7},"Rombo":{"kcal":81.0,"p":16.3,"l":1.3,"c":1.2},"Salmone":{"kcal":185.0,"p":18.4,"l":12.0,"c":1.0},"Salpa":{"kcal":104.0,"p":18.0,"l":2.7,"c":2.0},"Sarago":{"kcal":103.0,"p":15.0,"l":4.4,"c":1.0},"Sarda/sardina":{"kcal":129.0,"p":20.8,"l":4.5,"c":1.5},"Scorfano":{"kcal":82.0,"p":19.0,"l":0.4,"c":0.6},"Sgombro":{"kcal":170.0,"p":17.0,"l":11.1,"c":0.5},"Sogliola":{"kcal":86.0,"p":16.9,"l":1.7,"c":0.8},"Sogliola surgelata":{"kcal":81.0,"p":17.3,"l":1.3,"c":0.1},"Spigola d'allevamento (filetti)":{"kcal":149.0,"p":21.3,"l":6.8,"c":0.8},"Spigola":{"kcal":82.0,"p":16.5,"l":1.5,"c":0.6},"Storione":{"kcal":145.0,"p":19.2,"l":7.6,"c":0.0},"Surimi":{"kcal":95.0,"p":15.2,"l":0.9,"c":6.9},"Suro/sugarello":{"kcal":104.0,"p":18.3,"l":3.0,"c":1.0},"Tinca":{"kcal":79.0,"p":17.9,"l":0.5,"c":0.9},"Tonno fresco":{"kcal":159.0,"p":21.5,"l":8.1,"c":0.1},"Trota":{"kcal":86.0,"p":14.7,"l":3.0,"c":0.0},"Trota iridea (filetti)":{"kcal":118.0,"p":20.3,"l":4.1,"c":0.0},"Trota surgelata":{"kcal":92.0,"p":17.8,"l":2.3,"c":0.0},"Trota al forno":{"kcal":105.0,"p":20.4,"l":2.6,"c":0.0},"Trota al microonde":{"kcal":136.0,"p":26.7,"l":3.2,"c":0.0},"Lattarini":{"kcal":145.0,"p":14.6,"l":9.6,"c":0.0},"Calamari":{"kcal":68.0,"p":12.6,"l":1.7,"c":0.6},"Calamari surgelati":{"kcal":69.0,"p":13.5,"l":1.4,"c":0.6},"Cozze":{"kcal":84.0,"p":11.7,"l":2.7,"c":3.4},"Lumache di mare":{"kcal":128.0,"p":23.8,"l":0.4,"c":7.8},"Molluschi (misti)":{"kcal":72.0,"p":11.7,"l":2.0,"c":2.1},"Ostriche":{"kcal":69.0,"p":10.2,"l":0.9,"c":5.4},"Polpo":{"kcal":57.0,"p":10.6,"l":1.0,"c":1.4},"Polpo surgelato":{"kcal":51.0,"p":12.4,"l":0.2,"c":0},"Seppia":{"kcal":72.0,"p":14.0,"l":1.5,"c":0.7},"Seppia surgelata":{"kcal":63.0,"p":14.1,"l":0.4,"c":0.7},"Capesante":{"kcal":83.0,"p":16.8,"l":0.8,"c":2.4},"Vongole":{"kcal":72.0,"p":10.2,"l":2.5,"c":2.2},"Vongole in scatola":{"kcal":140.0,"p":25.6,"l":2.0,"c":5.1},"Alici sott'olio":{"kcal":206.0,"p":25.9,"l":11.3,"c":0.2},"Sardine sott'olio":{"kcal":198.0,"p":22.3,"l":12.1,"c":0.0},"Sgombro sott'olio":{"kcal":201.0,"p":25.3,"l":10.7,"c":1.0},"Tonno sott'olio sgocciolato":{"kcal":192.0,"p":25.2,"l":10.1,"c":0.0},"Alici sotto sale":{"kcal":137.0,"p":25.0,"l":3.1,"c":2.3},"Anguilla marinata":{"kcal":259.0,"p":14.8,"l":21.9,"c":0.6},"Aringa affumicata":{"kcal":194.0,"p":19.9,"l":12.7,"c":0.0},"Aringa marinata":{"kcal":199.0,"p":18.3,"l":14.0,"c":0.0},"Aringa salata":{"kcal":218.0,"p":19.8,"l":15.4,"c":0.0},"Baccalà ammollato":{"kcal":95.0,"p":21.6,"l":1.0,"c":0.0},"Baccalà secco":{"kcal":131.0,"p":29.0,"l":1.7,"c":0.0},"Bottarga di muggine":{"kcal":373.0,"p":35.5,"l":25.7,"c":0.0},"Caviale":{"kcal":255.0,"p":26.9,"l":15.0,"c":3.3},"Salmone affumicato":{"kcal":142.0,"p":25.4,"l":4.5,"c":1.2},"Salmone in salamoia":{"kcal":192.0,"p":21.1,"l":11.5,"c":1.0},"Sardine salate":{"kcal":133.0,"p":25.1,"l":3.6,"c":0},"Sgombro in salamoia":{"kcal":177.0,"p":19.3,"l":11.1,"c":0.0},"Stoccafisso ammollato":{"kcal":92.0,"p":20.7,"l":0.9,"c":0.3},"Stoccafisso secco":{"kcal":356.0,"p":80.1,"l":3.5,"c":1.1},"Tonno in salamoia (scatola)":{"kcal":103.0,"p":25.1,"l":0.3,"c":0.0},"Aragosta":{"kcal":85.0,"p":16.0,"l":1.9,"c":1.0},"Aragosta bollita":{"kcal":107.0,"p":20.2,"l":2.4,"c":1.3},"Astice":{"kcal":85.0,"p":18.8,"l":0.9,"c":0.5},"Crostacei (misti)":{"kcal":71.0,"p":14.4,"l":0.8,"c":1.7},"Gamberetti di lago":{"kcal":105.0,"p":17.0,"l":4.1,"c":0},"Gamberetti surgelati":{"kcal":63.0,"p":13.6,"l":1.0,"c":2.9},"Gamberi":{"kcal":71.0,"p":13.6,"l":0.6,"c":2.9},"Granchio":{"kcal":82.0,"p":18.1,"l":1.1,"c":0.0},"Granchio in scatola":{"kcal":77.0,"p":18.1,"l":0.5,"c":0},"Uovo d'anatra":{"kcal":190.0,"p":12.2,"l":15.4,"c":0.7},"Albume":{"kcal":43.0,"p":10.7,"l":0,"c":0.0},"Uovo intero":{"kcal":128.0,"p":12.4,"l":8.7,"c":0.0},"Uovo in polvere":{"kcal":537.0,"p":51.9,"l":36.4,"c":0.4},"Uovo sodo":{"kcal":128.0,"p":12.4,"l":8.7,"c":0.0},"Tuorlo":{"kcal":325.0,"p":15.8,"l":29.1,"c":0.0},"Uovo d'oca":{"kcal":189.0,"p":13.8,"l":14.4,"c":1.0},"Uovo di tacchina":{"kcal":147.0,"p":12.8,"l":10.2,"c":1.0},"Uovo congelato":{"kcal":128.0,"p":12.4,"l":8.7,"c":0.0},"Tuorlo congelato":{"kcal":325.0,"p":15.8,"l":29.1,"c":0.0},"Margarina":{"kcal":760.0,"p":0.7,"l":84.0,"c":0.4},"Burro di arachidi":{"kcal":623.0,"p":22.6,"l":53.7,"c":13.1},"Burro di cacao":{"kcal":900.0,"p":0,"l":100.0,"c":0},"Margarina vegetale (panetto)":{"kcal":746.0,"p":0.6,"l":82.8,"c":0.2},"Margarina vegetale (spalmabile)":{"kcal":635.0,"p":0.5,"l":70.0,"c":0.8},"Olio di cocco":{"kcal":899.0,"p":0.0,"l":99.9,"c":0.0},"Olio di colza":{"kcal":899.0,"p":0.0,"l":99.9,"c":0.0},"Olio di colza (basso erucico)":{"kcal":900.0,"p":0,"l":100.0,"c":0},"Olio di germe di grano":{"kcal":899.0,"p":0.0,"l":99.9,"c":0.0},"Olio di mais vitaminizzato":{"kcal":899.0,"p":0,"l":99.9,"c":0},"Olio di mandorle":{"kcal":899.0,"p":0.0,"l":99.9,"c":0.0},"Olio d'oliva":{"kcal":900.0,"p":0.0,"l":100.0,"c":0.0},"Olio EVO (extravergine d'oliva)":{"kcal":899.0,"p":0.0,"l":99.9,"c":0.0},"Olio d'oliva vitaminizzato":{"kcal":900.0,"p":0,"l":100.0,"c":0},"Olio di palma":{"kcal":899.0,"p":0.0,"l":99.9,"c":0.0},"Olio di riso":{"kcal":900.0,"p":0,"l":100.0,"c":0},"Olio di arachidi":{"kcal":900.0,"p":0.0,"l":100.0,"c":0.0},"Olio di girasole":{"kcal":899.0,"p":0.0,"l":99.9,"c":0.0},"Olio di mais":{"kcal":899.0,"p":0.0,"l":99.9,"c":0.0},"Olio di semi (generico)":{"kcal":899.0,"p":0,"l":99.9,"c":0},"Olio di semi vari":{"kcal":900.0,"p":0,"l":100.0,"c":0},"Olio di sesamo":{"kcal":898.0,"p":0.2,"l":99.7,"c":0.0},"Olio di soia":{"kcal":899.0,"p":0.0,"l":99.9,"c":0.0},"Olio di vinacciolo":{"kcal":899.0,"p":0.0,"l":99.9,"c":0.0},"Olio (generico)":{"kcal":899.0,"p":0,"l":99.9,"c":0},"Olio per frittura":{"kcal":899.0,"p":0,"l":99.9,"c":0},"Burro":{"kcal":758.0,"p":0.8,"l":83.4,"c":1.1},"Lardo":{"kcal":891.0,"p":0.0,"l":99.0,"c":0.0},"Olio di fegato di merluzzo":{"kcal":899.0,"p":0.0,"l":99.9,"c":0.0},"Grasso di maiale":{"kcal":661.0,"p":8.4,"l":69.3,"c":1.0},"Sego di bue":{"kcal":872.0,"p":0.8,"l":96.5,"c":0.0},"Strutto":{"kcal":892.0,"p":0.3,"l":99.0,"c":0.0},"Panna da cucina (20%)":{"kcal":206.0,"p":2.8,"l":20.0,"c":3.9},"Panna fresca (30%)":{"kcal":292.0,"p":2.6,"l":30.0,"c":3.2},"Panna montata (35%)":{"kcal":337.0,"p":2.3,"l":35.0,"c":3.4},"Panna light":{"kcal":206.0,"p":2.8,"l":20.0,"c":3.9},"Torrone con mandorle":{"kcal":479.0,"p":10.8,"l":26.8,"c":52.0},"Cioccolato al latte":{"kcal":564.0,"p":8.9,"l":37.6,"c":50.8},"Cioccolato bianco":{"kcal":529.0,"p":8.0,"l":30.9,"c":58.3},"Cioccolato con nocciole":{"kcal":570.0,"p":9.3,"l":40.1,"c":45.9},"Cioccolato fondente":{"kcal":542.0,"p":5.8,"l":34.0,"c":56.7},"Cioccolato gianduia":{"kcal":509.0,"p":13.1,"l":28.8,"c":52.7},"Crema di nocciole al cacao (tipo Nutella)":{"kcal":537.0,"p":6.9,"l":32.4,"c":58.1},"Crema Novi":{"kcal":550.0,"p":10.4,"l":36.0,"c":42.7},"Buccia d'arancia candita":{"kcal":284.0,"p":0.2,"l":0.2,"c":75.0},"Canditi":{"kcal":283.0,"p":0.5,"l":0,"c":75.0},"Cedro candito":{"kcal":283.0,"p":0.1,"l":0.2,"c":75.0},"Fichi canditi":{"kcal":292.0,"p":3.5,"l":0.2,"c":73.7},"Pere candite":{"kcal":295.0,"p":1.3,"l":0.6,"c":75.9},"Miele":{"kcal":304.0,"p":0.6,"l":0,"c":80.3},"Zucchero bianco":{"kcal":392.0,"p":0.0,"l":0,"c":104.5},"Zucchero di canna":{"kcal":380.0,"p":0.1,"l":0,"c":101.3},"Pappa reale":{"kcal":147.0,"p":10.0,"l":6.0,"c":14.0},"Caramelle alla frutta":{"kcal":327.0,"p":2.8,"l":0,"c":84.2},"Caramelle alla menta":{"kcal":393.0,"p":0.5,"l":0.7,"c":102.7},"Caramelle dure":{"kcal":344.0,"p":0.0,"l":0,"c":91.6},"Caramelle mou":{"kcal":430.0,"p":2.1,"l":17.2,"c":71.1},"Confetti":{"kcal":441.0,"p":5.2,"l":16.7,"c":71.9},"Gomme da masticare":{"kcal":365.0,"p":0.0,"l":0.3,"c":96.7},"Liquirizia":{"kcal":349.0,"p":3.7,"l":5.2,"c":76.7},"Marmellata frutta gialla":{"kcal":209.0,"p":0.6,"l":0,"c":55.2},"Marmellata frutta rossa":{"kcal":236.0,"p":0.6,"l":0,"c":62.3},"Marmellata (generica)":{"kcal":222.0,"p":0.5,"l":0,"c":58.7},"Marmellata light":{"kcal":123.0,"p":0.5,"l":0.1,"c":31.9},"Marmellata di albicocche":{"kcal":242.0,"p":0.7,"l":0.2,"c":63.2},"Marmellata di arance":{"kcal":261.0,"p":0.1,"l":0,"c":69.5},"Marmellata di prugne":{"kcal":131.0,"p":2.1,"l":0.6,"c":31.2},"Marmellata Hero (light)":{"kcal":42.0,"p":0.4,"l":0.2,"c":12.6},"Gelato al cioccolato":{"kcal":215.0,"p":3.8,"l":11.0,"c":27.0},"Gelato alla frutta":{"kcal":179.0,"p":3.5,"l":8.0,"c":24.7},"Gelato fior di latte":{"kcal":218.0,"p":4.2,"l":13.7,"c":20.7},"Ghiacciolo all'arancio":{"kcal":137.0,"p":0,"l":0,"c":36.5},"Granita al limone":{"kcal":106.0,"p":0,"l":0,"c":28.4},"Gelato al caffè":{"kcal":245.0,"p":5.1,"l":15.0,"c":23.9},"Gelato al cono panna e cioccolato":{"kcal":291.0,"p":5.1,"l":15.5,"c":34.9},"Gelato al cono con noccioline":{"kcal":326.0,"p":4.2,"l":20.5,"c":33.3},"Gelato fior di latte e fragola":{"kcal":101.0,"p":1.4,"l":1.7,"c":21.3},"Ghiacciolo All’Arancio":{"kcal":137.0,"p":0.0,"l":0.0,"c":36.5},"Gelato alla nocciola":{"kcal":183.0,"p":3.3,"l":8.4,"c":25.2},"Gelato alla panna":{"kcal":189.0,"p":3.2,"l":8.2,"c":27.2},"Gelato panna e cioccolato fondente":{"kcal":316.0,"p":4.5,"l":21.4,"c":28.2},"Sorbetto al limone":{"kcal":132.0,"p":0.9,"l":0.0,"c":34.2},"Gelato stracciatella":{"kcal":193.0,"p":2.9,"l":7.0,"c":31.5},"Gelato alla vaniglia":{"kcal":167.0,"p":2.7,"l":6.7,"c":25.7},"Gelato biscotto crema e zabaione":{"kcal":271.0,"p":5.3,"l":7.3,"c":49.1},"Dolcificante (saccarina)":{"kcal":370.0,"p":0,"l":0,"c":98.6},"Dolcificante (aspartame)":{"kcal":366.0,"p":0,"l":0,"c":97.5},"Fruttosio":{"kcal":373.0,"p":0,"l":0,"c":99.5},"Saccarina":{"kcal":0,"p":0,"l":0,"c":0},"Sciroppo di malto":{"kcal":292.0,"p":6.2,"l":0,"c":71.3},"Sciroppo per bibite":{"kcal":297.0,"p":0.3,"l":0,"c":79.0},"Brioche/cornetto":{"kcal":412.0,"p":7.2,"l":18.3,"c":58.4},"Merendina tipo pan di Spagna":{"kcal":462.0,"p":8.3,"l":22.3,"c":60.9},"Panettone":{"kcal":334.0,"p":6.4,"l":10.7,"c":56.5},"Cornetti":{"kcal":411.0,"p":7.2,"l":18.3,"c":58.0},"Confettini al cioccolato (tipo M&M)":{"kcal":456.0,"p":5.4,"l":17.5,"c":73.9},"Merendina tipo brioche":{"kcal":438.0,"p":8.2,"l":17.6,"c":65.7},"Merendina tipo pasta frolla":{"kcal":444.0,"p":5.3,"l":17.1,"c":71.7},"Wafer ricoperti al cioccolato":{"kcal":498.0,"p":8.2,"l":26.6,"c":60.3},"Barretta cocco e cioccolato":{"kcal":472.0,"p":4.8,"l":26.1,"c":58.2},"Fette biscottate":{"kcal":410.0,"p":11.3,"l":6.0,"c":83.0},"Fette biscottate dolci":{"kcal":404.0,"p":10.5,"l":6.2,"c":81.6},"Fette biscottate integrali":{"kcal":369.0,"p":11.2,"l":5.2,"c":74.1},"Fette biscottate vitaminizzate":{"kcal":410.0,"p":11.3,"l":6.0,"c":83.0},"Fette di segale integrali":{"kcal":290.0,"p":7.9,"l":1.3,"c":65.7},"Budino al cioccolato":{"kcal":129.0,"p":2.7,"l":4.0,"c":21.8},"Budino alla vaniglia":{"kcal":123.0,"p":2.3,"l":3.6,"c":21.8},"Crema pasticcera":{"kcal":192.0,"p":4.8,"l":6.4,"c":30.7},"Crème caramel":{"kcal":109.0,"p":3.0,"l":2.2,"c":20.6},"Tiramisù":{"kcal":411.0,"p":13.2,"l":25.8,"c":33.5},"Babà al rum":{"kcal":252.0,"p":5.9,"l":5.7,"c":41.4},"Bignè":{"kcal":318.0,"p":4.6,"l":15.4,"c":43.0},"Cannoli con crema":{"kcal":369.0,"p":6.2,"l":20.7,"c":42.2},"Meringa":{"kcal":379.0,"p":5.3,"l":0,"c":95.4},"Crostata con marmellata":{"kcal":339.0,"p":4.9,"l":8.2,"c":65.5},"Pan di Spagna":{"kcal":314.0,"p":8.5,"l":6.4,"c":59.4},"Pasta di mandorle":{"kcal":468.0,"p":8.0,"l":25.8,"c":54.3},"Pasta frolla":{"kcal":479.0,"p":7.7,"l":24.3,"c":61.3},"Pasta sfoglia":{"kcal":560.0,"p":5.6,"l":40.6,"c":45.9},"Torta al cioccolato":{"kcal":315.0,"p":4.9,"l":17.5,"c":36.8},"Torta margherita":{"kcal":368.0,"p":8.9,"l":10.4,"c":63.6},"Crostata con crema al cacao":{"kcal":492.0,"p":4.6,"l":24.7,"c":67.0},"Crostata albicocche confezionata":{"kcal":421.0,"p":0.9,"l":16.5,"c":71.7},"Biscotti al latte":{"kcal":417.0,"p":13.8,"l":8.5,"c":76.1},"Biscotti frollini":{"kcal":475.0,"p":7.4,"l":21.0,"c":68.5},"Biscotti integrali":{"kcal":433.0,"p":8.5,"l":19.5,"c":59.5},"Biscotti per l'infanzia":{"kcal":417.0,"p":13.8,"l":8.5,"c":76.1},"Biscotti tipo petit beurre":{"kcal":415.0,"p":6.0,"l":8.2,"c":84.7},"Biscotti al cioccolato":{"kcal":524.0,"p":5.7,"l":27.6,"c":67.4},"Savoiardi":{"kcal":392.0,"p":11.9,"l":9.2,"c":69.8},"Wafer":{"kcal":454.0,"p":7.1,"l":15.0,"c":77.6},"Biscotti da colazione":{"kcal":418.0,"p":6.6,"l":7.9,"c":85.4},"Cono per gelato":{"kcal":366.0,"p":10.1,"l":3.3,"c":78.8},"Pasticcini al cocco":{"kcal":393.0,"p":3.6,"l":12.7,"c":70.4},"Biscotti alla soia":{"kcal":366.0,"p":11.5,"l":6.1,"c":70.8},"Biscotti integrali di soia":{"kcal":456.0,"p":11.5,"l":20.4,"c":60.4},"Biscotti secchi":{"kcal":416.0,"p":6.6,"l":7.9,"c":84.8},"Cornetto con crema":{"kcal":390.0,"p":6.9,"l":17.1,"c":55.6},"Cornetto con marmellata":{"kcal":394.0,"p":6.5,"l":16.5,"c":58.4},"Merendina al cioccolato":{"kcal":336.0,"p":6.5,"l":9.5,"c":60.0},"Merendina con marmellata":{"kcal":358.0,"p":5.5,"l":8.3,"c":69.8},"Merendina farcita":{"kcal":414.0,"p":6.2,"l":15.1,"c":67.6},"Acqua tonica":{"kcal":33.0,"p":0,"l":0,"c":8.8},"Aranciata":{"kcal":38.0,"p":0.1,"l":0,"c":10.0},"Cola (tipo Coca-Cola)":{"kcal":39.0,"p":0.0,"l":0,"c":10.5},"Bibita gassata dietetica (zero)":{"kcal":3.0,"p":0,"l":0,"c":0.9},"Bitter analcolico":{"kcal":33.0,"p":0,"l":0,"c":8.8},"Soda":{"kcal":22.0,"p":0,"l":0,"c":5.8},"Champagne":{"kcal":76.0,"p":0.3,"l":0,"c":1.4},"Spumante alta gradazione":{"kcal":87.0,"p":0,"l":0,"c":0.6},"Spumante aromatico":{"kcal":82.0,"p":0.2,"l":0,"c":5.1},"Spumante demi-sec":{"kcal":71.0,"p":0.1,"l":0,"c":2.5},"Spumante secco":{"kcal":65.0,"p":0.1,"l":0,"c":0.7},"Vino bianco":{"kcal":71.0,"p":0.1,"l":0,"c":0.1},"Vino bianco da tavola":{"kcal":64.0,"p":0.1,"l":0,"c":0.1},"Vino rosato":{"kcal":71.0,"p":0.1,"l":0,"c":2.5},"Vino rosato (12%)":{"kcal":76.0,"p":0.1,"l":0,"c":2.5},"Vino rosso":{"kcal":76.0,"p":0.1,"l":0,"c":0.2},"Vino rosso da tavola":{"kcal":68.0,"p":0.1,"l":0,"c":0.2},"Aperitivo a base di vino":{"kcal":186.0,"p":0.0,"l":0.0,"c":17.0},"Amaro":{"kcal":261.0,"p":0,"l":0,"c":32.8},"Aperitivo alcolico":{"kcal":186.0,"p":0,"l":0,"c":17.0},"Crema di liquore":{"kcal":325.0,"p":0,"l":16.1,"c":22.8},"Liquore da dessert":{"kcal":314.0,"p":0,"l":0,"c":31.0},"Marsala all'uovo":{"kcal":150.0,"p":0.0,"l":0,"c":12.4},"Marsala":{"kcal":205.0,"p":0.1,"l":0,"c":28.0},"Porto":{"kcal":157.0,"p":0.1,"l":0,"c":12.0},"Sherry":{"kcal":116.0,"p":0.1,"l":0,"c":5.9},"Vermouth dolce":{"kcal":151.0,"p":0.0,"l":0,"c":15.9},"Vermouth secco":{"kcal":109.0,"p":0.1,"l":0,"c":3.0},"Birra analcolica":{"kcal":9.0,"p":0.2,"l":0,"c":1.5},"Birra doppio malto":{"kcal":44.0,"p":0.3,"l":0,"c":0},"Birra chiara speciale":{"kcal":45.0,"p":0.2,"l":0,"c":3.5},"Birra leggera/light":{"kcal":21.0,"p":0.2,"l":0,"c":1.6},"Birra (media gradazione)":{"kcal":27.0,"p":0.3,"l":0,"c":0},"Birra scura doppio malto":{"kcal":50.0,"p":0.4,"l":0,"c":1.5},"Birra scura speciale":{"kcal":40.0,"p":0.4,"l":0,"c":1.5},"Amaro ad alta gradazione":{"kcal":232.0,"p":0,"l":0,"c":0.5},"Brandy":{"kcal":224.0,"p":0,"l":0,"c":0},"Cherry brandy":{"kcal":262.0,"p":0,"l":0,"c":32.8},"Cognac":{"kcal":214.0,"p":0,"l":0,"c":0.9},"Gin":{"kcal":240.0,"p":0,"l":0,"c":0.1},"Grappa":{"kcal":235.0,"p":0,"l":0,"c":0},"Rum":{"kcal":222.0,"p":0,"l":0,"c":0},"Vodka":{"kcal":222.0,"p":0,"l":0,"c":0},"Whisky":{"kcal":238.0,"p":0.0,"l":0,"c":0.0},"Alcol puro":{"kcal":525.0,"p":0,"l":0,"c":0},"Sidro":{"kcal":42.0,"p":0,"l":0,"c":4.3},"Tè deteinato in foglie":{"kcal":108.0,"p":19.6,"l":2.0,"c":3.0},"Tè deteinato in tazza":{"kcal":0,"p":0.1,"l":0,"c":0},"Tè in foglie":{"kcal":108.0,"p":19.6,"l":2.0,"c":3.0},"Tè in tazza":{"kcal":0,"p":0.1,"l":0,"c":0},"Caffè americano":{"kcal":0,"p":0.1,"l":0,"c":0},"Caffè (espresso)":{"kcal":2.0,"p":0.1,"l":0.2,"c":0},"Caffè crudo in grani":{"kcal":188.0,"p":11.2,"l":13.1,"c":6.7},"Caffè decaffeinato":{"kcal":2.0,"p":0.1,"l":0.2,"c":0},"Caffè decaffeinato macinato":{"kcal":287.0,"p":10.4,"l":15.4,"c":28.5},"Caffè moka":{"kcal":2.0,"p":0.1,"l":0.2,"c":0},"Caffè solubile decaffeinato (polvere)":{"kcal":208.0,"p":11.6,"l":0.2,"c":42.6},"Caffè solubile decaffeinato":{"kcal":0,"p":0,"l":0,"c":0},"Caffè solubile (in polvere)":{"kcal":98.0,"p":20.4,"l":0,"c":4.5},"Caffè solubile (in tazza)":{"kcal":0,"p":0,"l":0,"c":0},"Caffè tostato macinato":{"kcal":287.0,"p":10.4,"l":15.4,"c":28.5},"Cacao amaro in polvere":{"kcal":355.0,"p":20.4,"l":25.6,"c":11.5},"Cacao dolce in polvere":{"kcal":349.0,"p":4.5,"l":8.6,"c":67.7},"Tisana":{"kcal":1.0,"p":0,"l":0,"c":0.2},"Caffè d'orzo (in polvere)":{"kcal":253.0,"p":6.0,"l":2.5,"c":55.1},"Caffè d'orzo (in tazza)":{"kcal":4.0,"p":0.1,"l":0,"c":0.9},"Alloro/lauro":{"kcal":288.0,"p":7.6,"l":8.4,"c":48.6},"Basilico fresco":{"kcal":39.0,"p":3.1,"l":0.8,"c":5.1},"Basilico secco":{"kcal":256.0,"p":14.4,"l":4.0,"c":43.2},"Cannella":{"kcal":253.0,"p":3.9,"l":3.2,"c":55.5},"Capperi sott'aceto":{"kcal":19.0,"p":2.6,"l":0.1,"c":2.1},"Cumino":{"kcal":398.0,"p":17.8,"l":22.3,"c":33.7},"Erba cipollina":{"kcal":23.0,"p":2.8,"l":0.6,"c":1.7},"Erbe aromatiche (foglie)":{"kcal":71.0,"p":3.2,"l":2.3,"c":9.9},"Erbe aromatiche (semi)":{"kcal":346.0,"p":14.1,"l":22.1,"c":24.2},"Semi di finocchio":{"kcal":244.0,"p":15.8,"l":14.9,"c":12.5},"Semi di lino":{"kcal":377.0,"p":24.5,"l":31.0,"c":0},"Maggiorana secca":{"kcal":273.0,"p":12.7,"l":7.0,"c":42.5},"Menta fresca":{"kcal":41.0,"p":3.8,"l":0.7,"c":5.3},"Menta secca":{"kcal":270.0,"p":24.8,"l":4.6,"c":34.6},"Noce moscata":{"kcal":395.0,"p":8.8,"l":29.0,"c":26.3},"Origano fresco":{"kcal":63.0,"p":2.2,"l":2.0,"c":9.7},"Origano secco":{"kcal":322.0,"p":11.0,"l":10.3,"c":49.5},"Paprika":{"kcal":307.0,"p":14.8,"l":13.0,"c":34.8},"Pepe nero":{"kcal":217.0,"p":10.9,"l":3.3,"c":38.3},"Prezzemolo fresco":{"kcal":20.0,"p":3.7,"l":0.6,"c":0.0},"Prezzemolo secco":{"kcal":181.0,"p":15.8,"l":7.0,"c":14.5},"Rosmarino fresco":{"kcal":96.0,"p":1.4,"l":4.4,"c":13.5},"Rosmarino secco":{"kcal":330.0,"p":4.9,"l":15.2,"c":46.4},"Salvia fresca":{"kcal":116.0,"p":3.9,"l":4.6,"c":15.6},"Salvia secca":{"kcal":317.0,"p":10.6,"l":12.7,"c":42.7},"Timo fresco":{"kcal":91.0,"p":3.0,"l":2.5,"c":15.1},"Timo secco":{"kcal":273.0,"p":9.1,"l":7.4,"c":45.3},"Estratto di vaniglia":{"kcal":290.0,"p":0.1,"l":0.1,"c":12.7},"Zafferano":{"kcal":329.0,"p":11.4,"l":5.9,"c":61.5},"Aceto":{"kcal":4.0,"p":0.4,"l":0,"c":0.6},"Dado per brodo":{"kcal":250.0,"p":15.7,"l":18.7,"c":5.0},"Dado vegetale":{"kcal":253.0,"p":13.5,"l":17.3,"c":11.6},"Estratto di carne":{"kcal":220.0,"p":54.0,"l":0.4,"c":0},"Gelatina alimentare":{"kcal":354.0,"p":88.3,"l":0.1,"c":0},"Maionese":{"kcal":655.0,"p":4.2,"l":70.0,"c":2.2},"Lievito di birra":{"kcal":56.0,"p":12.1,"l":0.4,"c":1.1},"Brodo di carne e verdura":{"kcal":5.0,"p":0.7,"l":0.2,"c":0.1},"Brodo di carne":{"kcal":7.0,"p":1.1,"l":0.2,"c":0},"Brodo di dado":{"kcal":5.0,"p":0.3,"l":0.4,"c":0.1},"Brodo di gallina":{"kcal":9.0,"p":0.6,"l":0.5,"c":0.6},"Brodo vegetale":{"kcal":6.0,"p":0.3,"l":0.4,"c":0.3},"Acqua":{"kcal":0,"p":0,"l":0,"c":0},"Crema di asparagi (scatola)":{"kcal":26.0,"p":1.0,"l":0.7,"c":4.2},"Crema di cipolle":{"kcal":26.0,"p":2.2,"l":1.0,"c":2.2},"Crema di funghi":{"kcal":56.0,"p":1.0,"l":4.0,"c":4.2},"Crema di pollo":{"kcal":58.0,"p":1.7,"l":3.8,"c":4.5},"Crema di pomodori":{"kcal":36.0,"p":0.8,"l":1.0,"c":6.4},"Minestrone liofilizzato":{"kcal":298.0,"p":10.1,"l":8.8,"c":47.6},"Crema/paté di olive":{"kcal":331.0,"p":1.4,"l":34.3,"c":4.5},"Ketchup":{"kcal":98.0,"p":2.1,"l":0.0,"c":24.0},"Pasto sostitutivo dietetico":{"kcal":344.0,"p":26.0,"l":9.4,"c":41.5},"Big burger (doppio hamburger)":{"kcal":221.0,"p":13.5,"l":11.5,"c":17.0},"Cheeseburger":{"kcal":255.0,"p":14.0,"l":13.1,"c":21.6},"Hamburger":{"kcal":242.0,"p":13.6,"l":10.5,"c":24.8},"Sale":{"kcal":0,"p":0,"l":0,"c":0},"Sofficini al formaggio":{"kcal":278.0,"p":7.2,"l":15.8,"c":28.6},"Pasta All’Uovo Bollita":{"kcal":122.0,"p":4.3,"l":0.8,"c":25.9},"Pasta di semola bollita":{"kcal":137.0,"p":4.7,"l":0.5,"c":30.3},"Riso bianco bollito":{"kcal":100.0,"p":2.0,"l":0.1,"c":24.2},"Riso integrale bollito":{"kcal":111.0,"p":2.5,"l":0.6,"c":25.5},"Riso parboiled bollito":{"kcal":97.0,"p":2.1,"l":0.1,"c":23.3},"Ceci bolliti":{"kcal":120.0,"p":7.0,"l":2.4,"c":18.9},"Fagioli bolliti":{"kcal":102.0,"p":7.9,"l":0.7,"c":17.0},"Fagioli borlotti bolliti":{"kcal":93.0,"p":6.9,"l":0.4,"c":16.4},"Fagioli cannellini bolliti":{"kcal":91.0,"p":8.0,"l":0.4,"c":14.9},"Fagiolini surgelati bolliti":{"kcal":25.0,"p":1.7,"l":0.1,"c":4.6},"Fave saltate":{"kcal":49.0,"p":6.1,"l":0.5,"c":5.3},"Lenticchie bollite":{"kcal":92.0,"p":6.9,"l":0.4,"c":16.3},"Lupini ammollati":{"kcal":114.0,"p":16.4,"l":2.4,"c":7.1},"Piselli saltati":{"kcal":91.0,"p":9.7,"l":1.0,"c":11.5},"Agretti bolliti":{"kcal":45.0,"p":4.8,"l":0.5,"c":5.6},"Asparagi bolliti":{"kcal":41.0,"p":5.1,"l":0.3,"c":4.7},"Bietola bollita":{"kcal":36.0,"p":2.8,"l":0.2,"c":6.0},"Broccoletti di rapa bolliti":{"kcal":32.0,"p":4.2,"l":0.4,"c":3.1},"Broccoli bolliti":{"kcal":39.0,"p":4.3,"l":0.5,"c":4.5},"Carciofi bolliti":{"kcal":82.0,"p":10.1,"l":0.7,"c":9.3},"Carote bollite":{"kcal":84.0,"p":2.6,"l":0.5,"c":18.3},"Cavolfiore bollito":{"kcal":40.0,"p":5.3,"l":0.3,"c":4.4},"Cavolini di Bruxelles bolliti":{"kcal":59.0,"p":6.7,"l":0.8,"c":6.6},"Broccolo ramoso bollito":{"kcal":105.0,"p":15.0,"l":1.3,"c":8.9},"Cavolo cappuccio bollito":{"kcal":21.0,"p":2.3,"l":0.1,"c":2.8},"Verza bollita":{"kcal":0.0,"p":2.1,"l":0.2,"c":0.0},"Cicoria di campo bollita":{"kcal":10.0,"p":1.4,"l":0.2,"c":0.7},"Cipolle bollite":{"kcal":109.0,"p":4.1,"l":0.4,"c":23.6},"Cipolline bollite":{"kcal":109.0,"p":4.1,"l":0.4,"c":23.6},"Finocchi bolliti":{"kcal":25.0,"p":3.5,"l":0.0,"c":2.9},"Funghi saltati in padella":{"kcal":58.0,"p":4.7,"l":0.4,"c":9.6},"Funghi champignon saltati":{"kcal":27.0,"p":4.8,"l":0.3,"c":1.5},"Melanzane saltate":{"kcal":41.0,"p":3.8,"l":1.4,"c":3.4},"Patate al forno/arrosto":{"kcal":148.0,"p":2.9,"l":4.5,"c":25.7},"Patate bollite (con buccia)":{"kcal":85.0,"p":2.1,"l":1.0,"c":17.9},"Patate bollite (senza buccia)":{"kcal":71.0,"p":1.8,"l":0.1,"c":16.9},"Patate al microonde":{"kcal":85.0,"p":2.1,"l":1.0,"c":17.9},"Patate fritte":{"kcal":188.0,"p":3.9,"l":6.7,"c":29.9},"Peperoni saltati":{"kcal":125.0,"p":5.2,"l":1.5,"c":24.3},"Porri bolliti":{"kcal":33.0,"p":2.4,"l":0.1,"c":5.9},"Spinaci bolliti":{"kcal":63.0,"p":6.3,"l":1.3,"c":7.0},"Spinaci surgelati":{"kcal":23.0,"p":2.8,"l":0.0,"c":3.0},"Zucchine bollite":{"kcal":27.0,"p":3.2,"l":0.2,"c":3.4},"Filetto di vitello saltato":{"kcal":258.0,"p":38.6,"l":11.5,"c":0.0},"Pasta ripiena (ravioli/tortellini freschi)":{"kcal":141.0,"p":12.0,"l":0.5,"c":30.0},"Gnocchi di patate":{"kcal":145.34,"p":4.52,"l":0.61,"c":30.44},"Gallette di mais":{"kcal":385.0,"p":6.9,"l":1.2,"c":86.0},"Yogurt greco 0% grassi":{"kcal":57.0,"p":9.6,"l":0.1,"c":3.8},"Semi di chia":{"kcal":436.0,"p":20.0,"l":31.0,"c":2.0},"Proteine in polvere (generiche)":{"kcal":400.0,"p":100.0,"l":0,"c":0},"Pancake (ricetta base)":{"kcal":157.55,"p":7.88,"l":4.2,"c":23.5},"Mix cereali e frutta essiccata":{"kcal":332.55,"p":9.71,"l":2.0,"c":73.43},"Yogurt greco 2% grassi":{"kcal":70.0,"p":9.9,"l":2.0,"c":3.0},"Yogurt greco 5% grassi":{"kcal":93.0,"p":9.0,"l":5.0,"c":3.0},"Wasa (pane croccante)":{"kcal":334.0,"p":9.0,"l":1.5,"c":65.0},"Affettato magro (generico)":{"kcal":143.5,"p":27.37,"l":3.63,"c":0.33},"Pesce fresco (generico)":{"kcal":0,"p":0,"l":0,"c":0},"Pesce magro (generico)":{"kcal":81.05,"p":17.49,"l":1.01,"c":0.5},"Pesce grasso (generico)":{"kcal":175.1,"p":16.9,"l":11.63,"c":0.7},"Crostacei e molluschi (misti)":{"kcal":0,"p":0,"l":0,"c":0},"Philadelphia Protein":{"kcal":87.0,"p":11.0,"l":2.5,"c":4.9},"Fiocchi di latte (generico)":{"kcal":0,"p":0,"l":0,"c":0},"Formaggio fresco (generico)":{"kcal":0,"p":0,"l":0,"c":0},"Formaggio stagionato (generico)":{"kcal":0,"p":0,"l":0,"c":0},"Philadelphia Light":{"kcal":159.0,"p":6.2,"l":13.0,"c":4.4},"Frutta poco zuccherina":{"kcal":0,"p":0,"l":0,"c":0},"Frutta (caloricamente media)":{"kcal":0,"p":0,"l":0,"c":0},"Frutta molto zuccherina":{"kcal":0,"p":0,"l":0,"c":0},"Frutta essiccata (generica)":{"kcal":0,"p":0,"l":0,"c":0},"Frutta sciroppata (generica)":{"kcal":0,"p":0,"l":0,"c":0},"Barretta Amino (ProAction)":{"kcal":367.0,"p":19.0,"l":9.0,"c":47.0},"Gel SIS Carbo":{"kcal":144.0,"p":0.0,"l":0.1,"c":36.0},"Barretta Race (ProAction)":{"kcal":458.0,"p":37.0,"l":21.0,"c":31.0},"Gel Carbo Sprint Extreme (ProAction)":{"kcal":277.0,"p":0.5,"l":0.0,"c":69.0},"Gel Carbo Sprint Ultrarace (ProAction)":{"kcal":196.0,"p":0.0,"l":0.0,"c":49.0},"Barretta Enervit":{"kcal":347.0,"p":3.9,"l":3.0,"c":75.0},"Recovery Enervit (polvere)":{"kcal":368.0,"p":40.0,"l":2.6,"c":46.0},"Gel Enervit":{"kcal":322.0,"p":0.0,"l":0.0,"c":80.0},"Maltodestrine":{"kcal":384.0,"p":0.5,"l":0.0,"c":96.0},"Sali minerali (endurance)":{"kcal":380.0,"p":0.0,"l":0.0,"c":89.0},"Mix cereali e frutta secca":{"kcal":228.26,"p":5.78,"l":7.29,"c":34.89},"Gel SIS Go Energy":{"kcal":143.0,"p":0,"l":0,"c":36.0},"Barretta Fruit Energy (Named)":{"kcal":364.0,"p":4.5,"l":9.5,"c":63.0},"Gel Carbo Energy (Named)":{"kcal":304.0,"p":0,"l":0,"c":76.0},"Barretta Jelly (ProAction)":{"kcal":437.0,"p":7.6,"l":14.0,"c":67.0},"Barretta Nut (ProAction)":{"kcal":710.0,"p":20.0,"l":37.0,"c":36.0},"Barretta Fruit (ProAction)":{"kcal":367.0,"p":5.5,"l":8.8,"c":63.0},"Barretta 1998 (ProAction)":{"kcal":361.0,"p":12.0,"l":5.7,"c":64.0},"Barretta Protein Sport (ProAction)":{"kcal":488.0,"p":30.0,"l":25.0,"c":36.0},"Barretta Competition Banana/Vaniglia (Enervit)":{"kcal":328.0,"p":4.1,"l":2.8,"c":71.0},"Barretta Competition Frutti Rossi (Enervit)":{"kcal":344.0,"p":4.3,"l":2.7,"c":74.0},"Pre Sport Mirtillo Rosso (Enervit)":{"kcal":243.0,"p":0.3,"l":0.0,"c":60.0},"Energy Crisp Frutti di Bosco (Why Sport)":{"kcal":383.33,"p":3.67,"l":3.33,"c":83.0},"Gel Malto Fuel (Why Sport)":{"kcal":227.88,"p":0.0,"l":0.0,"c":56.97},"Torta salata (rego Silvio)":{"kcal":216.36,"p":11.35,"l":5.76,"c":31.72},"Bomba di Silvio (avena/uvetta)":{"kcal":311.14,"p":7.74,"l":1.77,"c":70.41},"Muesli fatto in casa":{"kcal":478.26,"p":8.81,"l":29.47,"c":44.45},"Porridge (avena, latte, frutta, noci)":{"kcal":162.67,"p":4.5,"l":5.86,"c":24.55},"Latte di Mandorle (ALPRO, no zuccheri)":{"kcal":13.0,"p":0.5,"l":1.1,"c":0.0},"Super Dextrin (polvere)":{"kcal":381.0,"p":0,"l":0,"c":95.0},"Gel Super Dextrin":{"kcal":186.0,"p":0,"l":0,"c":47.0},"Energia Rapida EthicSport":{"kcal":240.0,"p":0,"l":0,"c":60.0},"Barretta SIS Go Energy":{"kcal":344.0,"p":11.0,"l":5.3,"c":63.0},"SIS Go Energy Bakes":{"kcal":380.0,"p":7.0,"l":10.0,"c":62.0},"Gel SIS Go Isotonic":{"kcal":144.0,"p":0,"l":0.1,"c":36.0},"Gel SIS Beta Fuel":{"kcal":264.0,"p":0,"l":0,"c":66.0},"SIS Beta Fuel (polvere)":{"kcal":390.0,"p":0,"l":0,"c":98.0},"SIS Go Electrolyte (polvere)":{"kcal":364.0,"p":0,"l":0,"c":91.0},"Super Dextrin Endura":{"kcal":232.0,"p":0,"l":0,"c":58.0},"Super Dextrin Boost":{"kcal":168.0,"p":0.01,"l":0,"c":42.0},"Super Hydro":{"kcal":341.0,"p":0,"l":0,"c":81.0},"Energy Ananas e Cocco":{"kcal":405.0,"p":4.6,"l":12.0,"c":68.0},"Performance Sete":{"kcal":367.0,"p":0.01,"l":0,"c":86.02},"MALTOSHOT Endurance":{"kcal":207.0,"p":0,"l":0,"c":50.0},"Recupero Extreme":{"kcal":288.0,"p":0,"l":0,"c":72.0},"Recupero EthicSport":{"kcal":352.0,"p":0,"l":0.01,"c":69.42},"Gel Nrgy Unit (Nduranz)":{"kcal":240.0,"p":0,"l":0,"c":60.0},"Drink Nrgy Unit (Nduranz)":{"kcal":362.8,"p":0,"l":0,"c":90.0},"Drink Nrgy Unit 90 (Nduranz)":{"kcal":369.2,"p":0,"l":0,"c":93.8},"Drink Nrgy Unit Buffer (Nduranz)":{"kcal":346.4,"p":0,"l":0,"c":86.6},"Barretta Training (Nduranz)":{"kcal":382.9,"p":5.5,"l":8.0,"c":67.5},"Recovery Regen (Nduranz)":{"kcal":378.3,"p":34.5,"l":0.8,"c":59.2},"Carbo Gel Cola + caffeina (Enervit)":{"kcal":268.0,"p":0,"l":0,"c":67.0},"Carbo Jelly (Enervit)":{"kcal":240.0,"p":0,"l":0,"c":60.0},"Carbo Chews (Enervit)":{"kcal":348.0,"p":0,"l":0,"c":87.0},"Isocarb (Enervit)":{"kcal":376.0,"p":0,"l":0,"c":92.0},"Carbo Gel Limone + sodio (Enervit)":{"kcal":268.0,"p":0,"l":0,"c":67.0},"Carbo Bar Brownie (Enervit)":{"kcal":363.0,"p":4.6,"l":0,"c":74.0},"Nutri Pump (+Watt)":{"kcal":364.0,"p":19.0,"l":3.2,"c":63.0},"Nutri Ride (+Watt)":{"kcal":372.0,"p":15.0,"l":2.8,"c":70.0},"Intra Pump (+Watt)":{"kcal":363.33,"p":43.33,"l":0.0,"c":46.67},"Sali+ Electrolyte (+Watt)":{"kcal":350.0,"p":0.0,"l":0.0,"c":85.0},"Sali+ Performance (+Watt)":{"kcal":347.5,"p":0.0,"l":3.75,"c":80.0},"Barretta Solid 160 (Maurten)":{"kcal":368.0,"p":4.3,"l":6.0,"c":72.7},"Barretta Solid C 160 (Maurten)":{"kcal":371.0,"p":4.8,"l":5.9,"c":72.7},"Gel 160 (Maurten)":{"kcal":250.0,"p":0.0,"l":0.0,"c":62.5},"Gel 100 + caffeina (Maurten)":{"kcal":250.0,"p":0.0,"l":0.0,"c":62.5},"Drink Mix 320 + caffeina (Maurten)":{"kcal":386.0,"p":0,"l":0,"c":94.0},"Drink Mix 160 (Maurten)":{"kcal":381.0,"p":0,"l":0,"c":93.0},"Drink Mix 320 (Maurten)":{"kcal":386.0,"p":0,"l":0,"c":94.0},"Gel C30+ caffeina (Never2)":{"kcal":200.0,"p":0.0,"l":0.0,"c":50.0},"Gel C30 2:1 (Never2)":{"kcal":200.0,"p":0,"l":0,"c":50.0},"Sport Drink C30 (Never2)":{"kcal":375.0,"p":0.0,"l":0.0,"c":94.0},"High Carb C90 (Never2)":{"kcal":383.0,"p":0.0,"l":0.0,"c":96.0},"Recovery Drink (Never2)":{"kcal":375.0,"p":75.0,"l":2.0,"c":12.0},"Fuel Bar C30 (Never2)":{"kcal":383.0,"p":6.4,"l":10.7,"c":64.0},"Recovery Drink (Santamadre)":{"kcal":367.0,"p":31.0,"l":0.0,"c":61.0},"Pure Protein (Santamadre)":{"kcal":355.0,"p":91.0,"l":0.0,"c":0.0},"Isotonic Electrolyte (Santamadre)":{"kcal":372.0,"p":0.0,"l":0.0,"c":89.0},"Unusual Food (Santamadre)":{"kcal":357.0,"p":0.0,"l":0.0,"c":88.0},"Unusual Fuel (Santamadre)":{"kcal":400.0,"p":0.0,"l":0.0,"c":100.0},"Carbofuel (Santamadre)":{"kcal":363.0,"p":0.0,"l":0.0,"c":86.5},"Jelly Bar (Santamadre)":{"kcal":333.0,"p":0.0,"l":0.0,"c":82.2},"Sweet Bar Cioccolato (Santamadre)":{"kcal":447.0,"p":5.2,"l":17.5,"c":66.7},"Sweet Bar Cheesecake (Santamadre)":{"kcal":442.0,"p":5.1,"l":17.3,"c":66.7},"Sweet Bar Mela (Santamadre)":{"kcal":397.0,"p":5.5,"l":13.5,"c":62.0},"Unusual Bar 50g carbo (Santamadre)":{"kcal":375.0,"p":4.6,"l":4.6,"c":77.0},"Unusual Gel 60g carbo (Santamadre)":{"kcal":241.0,"p":0.04,"l":0.0,"c":60.0},"Gel 30g carbo (Santamadre)":{"kcal":208.3,"p":0.0,"l":0.0,"c":50.0},"Gel Super Dextrin PRO":{"kcal":318.0,"p":0,"l":0.2,"c":77.0},"Gel RACE Fuel Named":{"kcal":267.0,"p":0,"l":0,"c":67.0},"RACE Fuel Named (polvere)":{"kcal":400.0,"p":0,"l":0,"c":99.0},"Scorza d'arancia":{"kcal":62.0,"p":1.5,"l":0.2,"c":14.4},"Scorza di limone":{"kcal":29.0,"p":1.5,"l":0.3,"c":5.4},"Triglia":{"kcal":123.0,"p":15.8,"l":6.2,"c":1.1},"Ciliegie candite":{"kcal":251.0,"p":0.4,"l":0.0,"c":66.4},"Fagioli borlotti freschi bolliti":{"kcal":69.0,"p":5.7,"l":0.5,"c":11.2},"Rape bollite":{"kcal":36.0,"p":1.9,"l":0.0,"c":7.5},"Sardine fritte":{"kcal":0.0,"p":32.3,"l":21.2,"c":0.0},"Carne magra (generica)":{"kcal":0,"p":0,"l":0,"c":0},"Carne grassa (generica)":{"kcal":0,"p":0,"l":0,"c":0},"Carni conservate (generiche)":{"kcal":0,"p":0,"l":0,"c":0},"Frattaglie (generiche)":{"kcal":0,"p":0,"l":0,"c":0},"Insaccati (generici)":{"kcal":0,"p":0,"l":0,"c":0},"Verdura (generica)":{"kcal":0,"p":0,"l":0,"c":0},"Legumi secchi (generici)":{"kcal":0,"p":0,"l":0,"c":0},"Legumi freschi (generici)":{"kcal":0,"p":0,"l":0,"c":0},"Legumi in scatola (generici)":{"kcal":0,"p":0,"l":0,"c":0},"Latte d'avena (senza zucchero)":{"kcal":40.0,"p":0.2,"l":1.5,"c":5.6},"Latte di soia (senza zucchero)":{"kcal":33.0,"p":3.3,"l":1.8,"c":0.0}};
+
+const ALIMENTI_LIST = Object.keys(DB).filter(k => DB[k].kcal > 0 || DB[k].p > 0).sort();
+
+// ─── STRUTTURA PASTI ───────────────────────────────────────────────────────
+const PASTI = ["Colazione", "Spuntino mattina", "Pranzo", "Spuntino pomeriggio", "Cena", "Dopo cena"];
+let stato = {};
+PASTI.forEach(p => { stato[p] = []; });
+
+// ─── SALVATAGGIO LOCALE ────────────────────────────────────────────────────
+const STORAGE_KEY = 'diario_triberti_v1';
+
+function salva() {
+  try {
+    const dati = {
+      nome: document.getElementById('nome')?.value || '',
+      data: document.getElementById('data')?.value || '',
+      email: document.getElementById('email')?.value || '',
+      note: document.getElementById('note')?.value || '',
+      stato: stato,
+      salvato: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dati));
+  } catch(e) {}
+}
+
+function ripristina() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const dati = JSON.parse(raw);
+    // Controlla che i dati abbiano contenuto utile
+    const hasContent = PASTI.some(p => dati.stato[p] && dati.stato[p].some(r => r.alimento));
+    if (!hasContent && !dati.nome) return false;
+    // Ripristina
+    if (dati.nome) document.getElementById('nome').value = dati.nome;
+    if (dati.data) document.getElementById('data').value = dati.data;
+    if (dati.email) document.getElementById('email').value = dati.email;
+    if (dati.note) document.getElementById('note').value = dati.note;
+    PASTI.forEach(p => {
+      if (dati.stato[p]) stato[p] = dati.stato[p];
+    });
+    return dati.salvato;
+  } catch(e) { return false; }
+}
+
+function cancellaSalvataggio() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+}
+
+function mostraBannerRipristino(timestamp) {
+  const data = new Date(timestamp);
+  const ora = data.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+  const banner = document.createElement('div');
+  banner.id = 'banner-ripristino';
+  banner.style.cssText = `
+    background: #2E6B4F; color: #fff; padding: 12px 16px;
+    font-size: 13px; text-align: center; line-height: 1.5;
+  `;
+  banner.innerHTML = `
+    ✓ Abbiamo ritrovato il tuo diario salvato (ultimo aggiornamento: ore ${ora})<br>
+    <span style="opacity:0.8;font-size:12px">Puoi continuare da dove avevi lasciato</span>
+    <button onclick="document.getElementById('banner-ripristino').remove()"
+      style="display:block;margin:8px auto 0;background:rgba(255,255,255,0.2);border:none;
+      color:#fff;padding:5px 16px;border-radius:20px;font-size:12px;cursor:pointer;">
+      OK, continua
+    </button>
+  `;
+  document.body.insertBefore(banner, document.body.firstChild);
+}
+
+// ─── RENDERING ─────────────────────────────────────────────────────────────
+function render() {
+  const cont = document.getElementById('pasti-container');
+  cont.innerHTML = '';
+  PASTI.forEach(pasto => {
+    const righe = stato[pasto];
+    const tot = calcolaTot(righe);
+    const card = document.createElement('div');
+    card.className = 'card';
+    const hasData = righe.some(r => r.alimento && r.grammi);
+
+    card.innerHTML = `
+      <div class="pasto-header">
+        <span class="pasto-name">${pasto}</span>
+        <span class="pasto-kcal">${hasData ? tot.kcal.toFixed(0) + ' kcal' : ''}</span>
+      </div>
+      <div class="pasto-body" id="body-${pasto.replace(/\s/g,'_')}">
+        ${righe.map((r, i) => renderRiga(pasto, i, r)).join('')}
+        <button class="btn-add" onclick="addRiga('${pasto}')">+ Aggiungi alimento</button>
+        ${hasData ? renderTotalePasto(tot) : ''}
+      </div>
+    `;
+    cont.appendChild(card);
+  });
+  aggiornaRiepilogo();
+  // Re-attach autocomplete events
+  document.querySelectorAll('.autocomplete-input').forEach(inp => {
+    inp.addEventListener('input', function() {
+      const pasto = this.dataset.pasto;
+      const idx = parseInt(this.dataset.idx);
+      const query = this.value;
+      stato[pasto][idx].alimento = '';
+      stato[pasto][idx]._query = query;
+      mostraListaAuto(this, pasto, idx, query);
+    });
+    inp.addEventListener('blur', function() {
+      setTimeout(() => chiudiListe(), 200);
+    });
+  });
+  document.querySelectorAll('.grammi-input').forEach(inp => {
+    inp.addEventListener('input', function() {
+      const pasto = this.dataset.pasto;
+      const idx = parseInt(this.dataset.idx);
+      stato[pasto][idx].grammi = parseFloat(this.value) || 0;
+      aggiornaRigaValori(pasto, idx);
+      aggiornaRiepilogo();
+      salva();
+    });
+  });
+}
+
+function renderRiga(pasto, idx, riga) {
+  const n = calcola(riga.alimento, riga.grammi);
+  const hasDati = riga.alimento && riga.grammi;
+  const pid = pasto.replace(/\s/g,'_');
+  return `
+    <div class="riga-alimento" id="riga-${pid}-${idx}">
+      <div class="riga-top">
+        <div class="autocomplete-wrap">
+          <input type="text" class="autocomplete-input"
+            data-pasto="${pasto}" data-idx="${idx}"
+            value="${riga._query || riga.alimento || ''}"
+            placeholder="Cerca alimento..." autocomplete="off" autocorrect="off" spellcheck="false" />
+          <div class="autocomplete-list" id="list-${pid}-${idx}" style="display:none"></div>
+        </div>
+        <input type="number" class="grammi-input"
+          data-pasto="${pasto}" data-idx="${idx}"
+          value="${riga.grammi || ''}"
+          placeholder="g" min="0" step="1" inputmode="decimal" />
+        <button class="btn-remove" onclick="removeRiga('${pasto}',${idx})">×</button>
+      </div>
+      <div class="riga-bottom" id="nutri-${pid}-${idx}">
+        ${hasDati ? renderNutriPills(n) : ''}
+      </div>
+    </div>
+  `;
+}
+
+function renderNutriPills(n) {
+  if (n.kcal === 0 && n.p === 0) return '';
+  return `
+    <span class="nutri-pill kcal">${n.kcal.toFixed(0)} kcal</span>
+    <span class="nutri-pill">P: ${n.p.toFixed(1)}g</span>
+    <span class="nutri-pill">G: ${n.l.toFixed(1)}g</span>
+    <span class="nutri-pill">C: ${n.c.toFixed(1)}g</span>
+  `;
+}
+
+function renderTotalePasto(tot) {
+  return `
+    <div class="totale-pasto">
+      <span class="nutri-pill kcal">Totale: ${tot.kcal.toFixed(0)} kcal</span>
+      <span class="nutri-pill">P ${tot.p.toFixed(1)}g</span>
+      <span class="nutri-pill">G ${tot.l.toFixed(1)}g</span>
+      <span class="nutri-pill">C ${tot.c.toFixed(1)}g</span>
+    </div>
+  `;
+}
+
+// ─── CALCOLI ───────────────────────────────────────────────────────────────
+function calcola(nome, grammi) {
+  if (!nome || !grammi || !DB[nome]) return {kcal:0,p:0,l:0,c:0,f:0};
+  const f = grammi / 100;
+  const d = DB[nome];
+  return {
+    kcal: (d.kcal||0)*f,
+    p: (d.p||0)*f,
+    l: (d.l||0)*f,
+    c: (d.c||0)*f,
+    f: 0
+  };
+}
+
+function calcolaTot(righe) {
+  return righe.reduce((acc, r) => {
+    const n = calcola(r.alimento, r.grammi);
+    return {kcal:acc.kcal+n.kcal, p:acc.p+n.p, l:acc.l+n.l, c:acc.c+n.c, f:acc.f+n.f};
+  }, {kcal:0,p:0,l:0,c:0,f:0});
+}
+
+function aggiornaRiepilogo() {
+  const allRighe = PASTI.flatMap(p => stato[p]);
+  const tot = calcolaTot(allRighe);
+  const hasData = tot.kcal > 0 || tot.p > 0;
+  const riq = document.getElementById('riepilogo');
+  if (!hasData) { riq.style.display = 'none'; return; }
+  riq.style.display = 'block';
+  document.getElementById('tot-kcal').textContent = tot.kcal.toFixed(0);
+  document.getElementById('tot-p').textContent = tot.p.toFixed(1);
+  document.getElementById('tot-l').textContent = tot.l.toFixed(1);
+  document.getElementById('tot-c').textContent = tot.c.toFixed(1);
+  document.getElementById('tot-f').textContent = tot.f.toFixed(1);
+  // Macro bar
+  const en = tot.p*4 + tot.l*9 + tot.c*4;
+  if (en > 0) {
+    const pP = (tot.p*4/en*100).toFixed(1);
+    const pL = (tot.l*9/en*100).toFixed(1);
+    const pC = (tot.c*4/en*100).toFixed(1);
+    document.getElementById('macro-bar').innerHTML = `
+      <div class="macro-bar-p" style="width:${pP}%"></div>
+      <div class="macro-bar-l" style="width:${pL}%"></div>
+      <div class="macro-bar-c" style="width:${pC}%"></div>
+    `;
+  }
+}
+
+function aggiornaRigaValori(pasto, idx) {
+  const pid = pasto.replace(/\s/g,'_');
+  const riga = stato[pasto][idx];
+  const n = calcola(riga.alimento, riga.grammi);
+  const el = document.getElementById(`nutri-${pid}-${idx}`);
+  if (el) el.innerHTML = renderNutriPills(n);
+}
+
+// ─── AZIONI ────────────────────────────────────────────────────────────────
+function addRiga(pasto) {
+  stato[pasto].push({alimento:'', grammi:0, _query:''});
+  render();
+  salva();
+  const pid = pasto.replace(/\s/g,'_');
+  const idx = stato[pasto].length - 1;
+  setTimeout(() => {
+    const inp = document.querySelector(`input.autocomplete-input[data-pasto="${pasto}"][data-idx="${idx}"]`);
+    if (inp) inp.focus();
+  }, 100);
+}
+
+function removeRiga(pasto, idx) {
+  stato[pasto].splice(idx, 1);
+  render();
+  salva();
+}
+
+// ─── AUTOCOMPLETE ──────────────────────────────────────────────────────────
+let activeList = null;
+
+function mostraListaAuto(input, pasto, idx, query) {
+  const pid = pasto.replace(/\s/g,'_');
+  const listEl = document.getElementById(`list-${pid}-${idx}`);
+  if (!listEl) return;
+  if (query.length < 2) { listEl.style.display = 'none'; return; }
+  const q = query.toLowerCase();
+  // Prima i match che iniziano con la query, poi quelli che la contengono
+  const starts = ALIMENTI_LIST.filter(a => a.toLowerCase().startsWith(q)).slice(0, 5);
+  const contains = ALIMENTI_LIST.filter(a => !a.toLowerCase().startsWith(q) && a.toLowerCase().includes(q)).slice(0, 8);
+  const matches = [...starts, ...contains].slice(0, 10);
+  if (matches.length === 0) { listEl.style.display = 'none'; return; }
+  listEl.innerHTML = matches.map(m => `
+    <div class="autocomplete-item" onmousedown="selezionaAlimento('${pasto}',${idx},'${m.replace(/'/g,"\\'")}')">${m}</div>
+  `).join('');
+  listEl.style.display = 'block';
+  activeList = listEl;
+}
+
+function selezionaAlimento(pasto, idx, nome) {
+  stato[pasto][idx].alimento = nome;
+  stato[pasto][idx]._query = nome;
+  chiudiListe();
+  render();
+  salva();
+  const pid = pasto.replace(/\s/g,'_');
+  setTimeout(() => {
+    const inp = document.querySelector(`input.grammi-input[data-pasto="${pasto}"][data-idx="${idx}"]`);
+    if (inp) { inp.focus(); inp.select(); }
+  }, 80);
+}
+
+function chiudiListe() {
+  document.querySelectorAll('.autocomplete-list').forEach(l => l.style.display = 'none');
+  activeList = null;
+}
+
+// Salva anche i campi info paziente quando cambiano
+['nome','data','email','note'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', salva);
+});
+
+// Chiudi liste toccando fuori
+document.addEventListener('touchstart', (e) => {
+  if (!e.target.closest('.autocomplete-wrap')) chiudiListe();
+}, {passive: true});
+
+// ─── INVIO EMAIL ───────────────────────────────────────────────────────────
+emailjs.init("Xauymd9xw8X7d7NqP"); // ← sostituire con la tua chiave EmailJS
+
+async function inviaDiario() {
+  const nome = document.getElementById('nome').value.trim();
+  const data = document.getElementById('data').value;
+  const email = document.getElementById('email').value.trim();
+  const note = document.getElementById('note').value.trim();
+
+  if (!nome) { mostraToast('Inserisci il tuo nome', 'error'); return; }
+  if (!data) { mostraToast('Inserisci la data', 'error'); return; }
+
+  const allRighe = PASTI.flatMap(p => stato[p]);
+  const hasData = allRighe.some(r => r.alimento && r.grammi);
+  if (!hasData) { mostraToast('Compila almeno un pasto', 'error'); return; }
+
+  // Costruisci testo email
+  let corpo = `DIARIO ALIMENTARE\n`;
+  corpo += `Paziente: ${nome}\n`;
+  corpo += `Data: ${data}\n`;
+  if (email) corpo += `Email paziente: ${email}\n`;
+  corpo += `${'-'.repeat(50)}\n\n`;
+
+  let totGiornata = {kcal:0,p:0,l:0,c:0};
+
+  PASTI.forEach(pasto => {
+    const righe = stato[pasto].filter(r => r.alimento && r.grammi);
+    if (righe.length === 0) return;
+    corpo += `${pasto.toUpperCase()}\n`;
+    righe.forEach(r => {
+      const n = calcola(r.alimento, r.grammi);
+      corpo += `  - ${r.alimento}: ${r.grammi}g → ${n.kcal.toFixed(0)} kcal | P ${n.p.toFixed(1)}g | G ${n.l.toFixed(1)}g | C ${n.c.toFixed(1)}g\n`;
+      totGiornata.kcal += n.kcal;
+      totGiornata.p += n.p;
+      totGiornata.l += n.l;
+      totGiornata.c += n.c;
+    });
+    const tot = calcolaTot(righe);
+    corpo += `  → Totale pasto: ${tot.kcal.toFixed(0)} kcal | P ${tot.p.toFixed(1)}g | G ${tot.l.toFixed(1)}g | C ${tot.c.toFixed(1)}g\n\n`;
+  });
+
+  corpo += `${'-'.repeat(50)}\n`;
+  corpo += `TOTALE GIORNATA:\n`;
+  corpo += `Energia: ${totGiornata.kcal.toFixed(0)} kcal\n`;
+  corpo += `Proteine: ${totGiornata.p.toFixed(1)}g\n`;
+  corpo += `Grassi: ${totGiornata.l.toFixed(1)}g\n`;
+  corpo += `Carboidrati: ${totGiornata.c.toFixed(1)}g\n`;
+  if (note) corpo += `\nNOTE: ${note}\n`;
+
+  // Mostra overlay
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('btn-invia').disabled = true;
+
+  try {
+    await emailjs.send(
+      'smtps.aruba.it',    // ← sostituire con il tuo Service ID
+      'template_9vxz04e',   // ← sostituire con il tuo Template ID
+      {
+        paziente: nome,
+        data_compilazione: data,
+        email_paziente: email || 'non fornita',
+        corpo_diario: corpo,
+        reply_to: email || 'noreply@example.com'
+      }
+    );
+    document.getElementById('overlay').classList.remove('show');
+    mostraToast('✓ Diario inviato con successo!', 'success');
+    document.getElementById('btn-invia').disabled = false;
+    // Pulisci dopo invio riuscito
+    cancellaSalvataggio();
+    setTimeout(() => {
+      PASTI.forEach(p => { stato[p] = []; });
+      document.getElementById('nome').value = '';
+      document.getElementById('email').value = '';
+      document.getElementById('note').value = '';
+      document.getElementById('data').value = new Date().toISOString().split('T')[0];
+      render();
+    }, 2500);
+  } catch(err) {
+    document.getElementById('overlay').classList.remove('show');
+    mostraToast('Errore nell invio. Riprova.', 'error');
+    document.getElementById('btn-invia').disabled = false;
+    console.error(err);
+  }
+}
+
+// ─── TOAST ─────────────────────────────────────────────────────────────────
+function mostraToast(msg, tipo='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${tipo} show`;
+  setTimeout(() => t.className = `toast ${tipo}`, 3000);
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────────────
+// Data di oggi come default
+document.getElementById('data').value = new Date().toISOString().split('T')[0];
+
+// Ripristina dati salvati se esistono
+const timestampSalvataggio = ripristina();
+render();
+if (timestampSalvataggio) {
+  mostraBannerRipristino(timestampSalvataggio);
+}
+</script>
+</body>
+</html>
